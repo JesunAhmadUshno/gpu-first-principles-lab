@@ -18,7 +18,7 @@ Protocol:
 
 Frozen verdict rule: hypothesis supported if the median coalesced bandwidth is at least 5x the median strided bandwidth; partially supported if the ratio is at least 2x and below 5x; refuted if below 2x.
 
-RESULTS: NOT YET RUN
+RESULTS (2026-11-07, BlackBox, RTX 5050 Laptop GPU): coalesced median 305.2 GB/s, strided median 72.3 GB/s, ratio 4.22x. Verdict: PARTIALLY SUPPORTED. Full record: units/u02-feeding-the-beast/STUDY.md and m1_results.json.
 
 ## M2: Occupancy sweep against the theory curve (Unit U03)
 
@@ -33,7 +33,7 @@ Protocol:
 
 Frozen verdict rule: hypothesis supported if achieved occupancy is within 10 percentage points of theoretical occupancy at the best block size, and the measured fastest block size lies within one sweep step of the onset of the theoretical plateau; partially supported if only one of the two conditions holds; refuted if neither holds.
 
-RESULTS: NOT YET RUN
+RESULTS (2026-11-07, BlackBox, RTX 5050 Laptop GPU): theoretical occupancy 50.0% at block 32, 100.0% at blocks 64 to 512, 66.7% at 1024 (CUDA occupancy API); achieved occupancy by runtime residency measurement 23.3%, 72.0%, 77.7%, 74.7%, 68.2%, 46.2% across the same sweep; fastest block size 64 (median 0.4515 ms), exactly the onset of the theoretical plateau, but achieved occupancy there is 28.0 percentage points below theoretical, outside the 10 point band. Verdict: PARTIALLY SUPPORTED. Full record: units/u03-inside-the-silicon/STUDY.md and m2_results.json.
 
 ## M3: The GEMM line (Units U06, U12, U13)
 
@@ -51,7 +51,7 @@ Protocol:
 
 Frozen verdict rule: supported if the median per-launch overhead is below 10 microseconds; refuted otherwise. The measured figure is reported either way.
 
-RESULTS: NOT YET RUN
+RESULTS (2026-11-07, BlackBox, RTX 5050 Laptop GPU): median per-launch overhead 12.28 microseconds across 10 repetitions of 1000 launches (spread 8.07 to 13.27 microseconds), above the frozen 10 microsecond line; a first execution from the idle power state gave a median of 14.87 microseconds and the same verdict. Verdict: REFUTED. Full record: units/u06-hardware-hierarchy/STUDY.md and m3a_results.json.
 
 ### M3b: Naive vs tiled GEMM (Unit U12)
 
@@ -67,7 +67,7 @@ Protocol:
 
 Frozen verdict rule: hypothesis supported if the tiled kernel's median time at 1024 is at most two thirds of the naive kernel's median time (a speedup of at least 1.5x); partially supported if the speedup is above 1.1x and below 1.5x; refuted at or below 1.1x. All three sizes are reported regardless of the verdict.
 
-RESULTS: NOT YET RUN
+RESULTS (2026-11-07, BlackBox, RTX 5050 Laptop GPU): naive median times 0.3181 ms, 2.3973 ms, 19.0402 ms at sizes 512, 1024, 2048 (about 900 GFLOP/s at every size); tiled median times 0.0584 ms, 0.2782 ms, 1.9895 ms (4,596.5, 7,718.5, 8,635.5 GFLOP/s); speedup at the verdict size 1024 is 8.62x. Correctness passed everywhere (max abs error 9.9e-05 on the full size 512 check, at most 2.9e-04 on the spot samples). Verdict: SUPPORTED. Full record: units/u12-shared-memory-and-tiling/STUDY.md and m3b_results.json.
 
 ### M3c: Tuned tiled GEMM vs the library call (Unit U13)
 

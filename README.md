@@ -2,7 +2,7 @@
 
 A study lab for GPU architecture, learned from first principles and proven by measurement.
 
-Status: SCAFFOLD ONLY. NO RESULTS YET. Every measured claim arrives through a pre-registered unit.
+Status: first measured unit landed. M1 (U02, coalesced vs strided bandwidth) ran 2026-11-07 under its frozen rule: PARTIALLY SUPPORTED at a 4.22x ratio. All other studies remain unrun. Every measured claim arrives through a pre-registered unit.
 
 **Live dashboard:** [jesunahmadushno.github.io/gpu-first-principles-lab](https://jesunahmadushno.github.io/gpu-first-principles-lab/), with the study map, the frozen verdict rules and three what-if tools that run in your browser. Source in `site/`; every count and threshold is parsed from this repo's markdown at build time, and no measured number appears because none exists yet.
 

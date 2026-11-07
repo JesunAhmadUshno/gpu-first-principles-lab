@@ -1,0 +1,180 @@
+{
+  "study": "M3b naive vs tiled GEMM",
+  "device": "NVIDIA GeForce RTX 5050 Laptop GPU",
+  "machine": "BlackBox",
+  "torch": "2.11.0+cu128",
+  "triton": "3.9.0",
+  "sizes": [
+    512,
+    1024,
+    2048
+  ],
+  "warmup_launches": 2,
+  "timed_launches": 10,
+  "seed": 20261107,
+  "tiled_tile_sizes": {
+    "BLOCK_M": 64,
+    "BLOCK_N": 64,
+    "BLOCK_K": 32
+  },
+  "tiled_dot_input_precision": "ieee",
+  "correctness": "host reference (NumPy matmul on the same host inputs); full check at size 512 with max abs error below 1e-2 required before timing; fixed seeded sample of 4096 elements at 1024 and 2048",
+  "gpu_state_before": {
+    "nvidia_smi": "22 MHz, 405 MHz, 0 %, 44, 4.89 W"
+  },
+  "gpu_state_after": {
+    "nvidia_smi": "1500 MHz, 9001 MHz, 61 %, 49, 32.36 W"
+  },
+  "results_by_size": {
+    "512": {
+      "naive": {
+        "correct": true,
+        "elements_checked": 262144,
+        "max_abs_err_vs_host": 9.918212890625e-05,
+        "registers_per_thread": 78,
+        "shared_bytes_per_block": 0,
+        "times_ms": [
+          0.313728004693985,
+          0.34940800070762634,
+          0.33849599957466125,
+          0.3178560137748718,
+          0.31836798787117004,
+          0.3197439908981323,
+          0.31856000423431396,
+          0.31705600023269653,
+          0.3165439963340759,
+          0.31721600890159607
+        ],
+        "time_ms_median": 0.31811200082302094,
+        "time_ms_q1": 0.3170960023999214,
+        "time_ms_q3": 0.31944799423217773,
+        "gflops_median": 843.8394505881654
+      },
+      "tiled": {
+        "correct": true,
+        "elements_checked": 262144,
+        "max_abs_err_vs_host": 9.918212890625e-05,
+        "registers_per_thread": 96,
+        "shared_bytes_per_block": 32768,
+        "times_ms": [
+          0.06639999896287918,
+          0.06668800115585327,
+          0.061792001128196716,
+          0.05910399928689003,
+          0.058400001376867294,
+          0.05833600088953972,
+          0.05737600103020668,
+          0.057023998349905014,
+          0.0575999990105629,
+          0.058400001376867294
+        ],
+        "time_ms_median": 0.058400001376867294,
+        "time_ms_q1": 0.0577839994803071,
+        "time_ms_q3": 0.061120000667870045,
+        "gflops_median": 4596.497425877278
+      },
+      "speedup_tiled_at_this_size": 5.447123173339986
+    },
+    "1024": {
+      "naive": {
+        "correct": true,
+        "elements_checked": 4096,
+        "max_abs_err_vs_host": 0.00011444091796875,
+        "registers_per_thread": 78,
+        "shared_bytes_per_block": 0,
+        "times_ms": [
+          2.400063991546631,
+          2.3986239433288574,
+          2.389120101928711,
+          2.3889920711517334,
+          2.3962559700012207,
+          2.4001920223236084,
+          2.395967960357666,
+          2.405855894088745,
+          2.3983678817749023,
+          2.3917438983917236
+        ],
+        "time_ms_median": 2.3973119258880615,
+        "time_ms_q1": 2.3927999138832092,
+        "time_ms_q3": 2.3997039794921875,
+        "gflops_median": 895.7881637386361
+      },
+      "tiled": {
+        "correct": true,
+        "elements_checked": 4096,
+        "max_abs_err_vs_host": 0.0001068115234375,
+        "registers_per_thread": 96,
+        "shared_bytes_per_block": 32768,
+        "times_ms": [
+          0.28723201155662537,
+          0.2871679961681366,
+          0.28703999519348145,
+          0.27798399329185486,
+          0.2762880027294159,
+          0.2789439857006073,
+          0.27692800760269165,
+          0.2742080092430115,
+          0.275519996881485,
+          0.2784639894962311
+        ],
+        "time_ms_median": 0.27822399139404297,
+        "time_ms_q1": 0.27644800394773483,
+        "time_ms_q3": 0.2850159928202629,
+        "gflops_median": 7718.542305571926
+      },
+      "speedup_tiled_at_this_size": 8.616481683970946
+    },
+    "2048": {
+      "naive": {
+        "correct": true,
+        "elements_checked": 4096,
+        "max_abs_err_vs_host": 0.00022125244140625,
+        "registers_per_thread": 78,
+        "shared_bytes_per_block": 0,
+        "times_ms": [
+          19.03753662109375,
+          19.072128295898438,
+          19.020063400268555,
+          19.076255798339844,
+          19.248319625854492,
+          19.0229434967041,
+          19.042848587036133,
+          19.11187171936035,
+          19.027936935424805,
+          19.012287139892578
+        ],
+        "time_ms_median": 19.04019260406494,
+        "time_ms_q1": 19.024191856384277,
+        "time_ms_q3": 19.075223922729492,
+        "gflops_median": 902.2949263828468
+      },
+      "tiled": {
+        "correct": true,
+        "elements_checked": 4096,
+        "max_abs_err_vs_host": 0.0002899169921875,
+        "registers_per_thread": 96,
+        "shared_bytes_per_block": 32768,
+        "times_ms": [
+          1.9920320510864258,
+          1.9916800260543823,
+          1.9850879907608032,
+          1.9893759489059448,
+          1.9850560426712036,
+          1.9895360469818115,
+          1.9888319969177246,
+          1.9884480237960815,
+          2.1340479850769043,
+          2.135296106338501
+        ],
+        "time_ms_median": 1.9894559979438782,
+        "time_ms_q1": 1.9885440170764923,
+        "time_ms_q3": 1.991944044828415,
+        "gflops_median": 8635.460749951524
+      },
+      "speedup_tiled_at_this_size": 9.570552263404249
+    }
+  },
+  "speedup_at_1024": 8.616481683970946,
+  "verdict": "SUPPORTED",
+  "verdict_rule": "supported if the tiled kernel's median time at 1024 is at most two thirds of the naive kernel's (speedup at least 1.5x); partially supported if the speedup is above 1.1x and below 1.5x; refuted at or below 1.1x (PREREGISTRATION.md M3b, frozen)"
+}

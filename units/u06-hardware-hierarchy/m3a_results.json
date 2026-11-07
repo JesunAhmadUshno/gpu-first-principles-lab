@@ -1,0 +1,37 @@
+{
+  "study": "M3a kernel launch overhead",
+  "device": "NVIDIA GeForce RTX 5050 Laptop GPU",
+  "machine": "BlackBox",
+  "torch": "2.11.0+cu128",
+  "triton": "3.9.0",
+  "kernel": "empty kernel (immediate return), grid (1,)",
+  "launches_per_repetition": 1000,
+  "repetitions": 10,
+  "warmup_launches_untimed": 10,
+  "per_launch_us_by_repetition": [
+    8.165375709533691,
+    8.072352409362793,
+    8.078592300415039,
+    13.27132797241211,
+    12.316255569458008,
+    12.291296005249023,
+    12.266528129577637,
+    12.408991813659668,
+    12.721920013427734,
+    12.201120376586914
+  ],
+  "per_launch_us_median": 12.27891206741333,
+  "per_launch_us_min": 8.072352409362793,
+  "per_launch_us_max": 13.27132797241211,
+  "per_launch_us_q1": 9.174311876296997,
+  "per_launch_us_q3": 12.385807752609253,
+  "measurement_note": "CUDA events bracket 1000 back-to-back enqueued launches on the stream; an empty kernel drains faster than the host can enqueue, so the figure is the launch path cost per launch on this device and stack, host dispatch included",
+  "gpu_state_before": {
+    "nvidia_smi": "180 MHz, 9001 MHz, 100 %, 67, 76.99 W"
+  },
+  "gpu_state_after": {
+    "nvidia_smi": "180 MHz, 9001 MHz, 100 %, 55, 50.21 W"
+  },
+  "verdict": "REFUTED",
+  "verdict_rule": "supported if the median per-launch overhead is below 10 microseconds; refuted otherwise (PREREGISTRATION.md M3a, frozen)"
+}
