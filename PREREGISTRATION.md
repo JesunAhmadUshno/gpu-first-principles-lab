@@ -33,7 +33,7 @@ Protocol:
 
 Frozen verdict rule: hypothesis supported if achieved occupancy is within 10 percentage points of theoretical occupancy at the best block size, and the measured fastest block size lies within one sweep step of the onset of the theoretical plateau; partially supported if only one of the two conditions holds; refuted if neither holds.
 
-RESULTS: NOT YET RUN
+RESULTS (2026-11-07, BlackBox, RTX 5050 Laptop GPU): theoretical occupancy 50.0% at block 32, 100.0% at blocks 64 to 512, 66.7% at 1024 (CUDA occupancy API); achieved occupancy by runtime residency measurement 23.3%, 72.0%, 77.7%, 74.7%, 68.2%, 46.2% across the same sweep; fastest block size 64 (median 0.4515 ms), exactly the onset of the theoretical plateau, but achieved occupancy there is 28.0 percentage points below theoretical, outside the 10 point band. Verdict: PARTIALLY SUPPORTED. Full record: units/u03-inside-the-silicon/STUDY.md and m2_results.json.
 
 ## M3: The GEMM line (Units U06, U12, U13)
 

@@ -1,0 +1,175 @@
+{
+  "study": "M2 occupancy sweep against the theory curve",
+  "device": "NVIDIA GeForce RTX 5050 Laptop GPU",
+  "machine": "BlackBox",
+  "torch": "2.11.0+cu128",
+  "triton": "3.9.0",
+  "n_elements": 16777216,
+  "kernel": "out[i] = x[i] * x[i] + x[i], one element per thread",
+  "warmup_launches": 3,
+  "timed_launches": 20,
+  "probe_launches_per_block_size": 5,
+  "device_limits": {
+    "multiprocessors": 20,
+    "max_threads_per_sm": 1536,
+    "max_warps_per_sm": 48,
+    "max_blocks_per_sm": 24,
+    "registers_per_sm": 65536,
+    "shared_memory_per_sm": 102400
+  },
+  "theoretical_occupancy_method": "cuOccupancyMaxActiveBlocksPerMultiprocessor (CUDA driver occupancy API) on the compiled kernel handle, times block size, divided by max threads per SM",
+  "achieved_occupancy_method": "instrumented twin kernel records globaltimer start and end and the SM id once per block; time-weighted mean resident warps per SM over the kernel window divided by the 48 warp per SM device maximum; median of 5 launches; no profiler (Nsight Compute) is installed on this machine, so the protocol's runtime measurement route was used",
+  "gpu_state_before": {
+    "nvidia_smi": "1500 MHz, 11001 MHz, 0 %, 49, 11.62 W"
+  },
+  "gpu_state_after": {
+    "nvidia_smi": "1500 MHz, 11001 MHz, 8 %, 49, 14.34 W"
+  },
+  "rows": [
+    {
+      "block_size": 32,
+      "warps_per_block": 1,
+      "grid_blocks": 524288,
+      "registers_per_thread": 10,
+      "register_spills": 0,
+      "shared_bytes_per_block": 0,
+      "api_max_active_blocks_per_sm": 24,
+      "theoretical_occupancy_pct": 50.0,
+      "achieved_occupancy_pct_runs": [
+        23.089956012530426,
+        23.395787198144046,
+        23.32099271115592,
+        23.315420658934276,
+        23.49144339354063
+      ],
+      "achieved_occupancy_pct_median": 23.32099271115592,
+      "time_ms_median": 0.985264003276825,
+      "time_ms_q1": 0.9842479825019838,
+      "time_ms_q3": 0.9905200004577637,
+      "correct": true,
+      "max_abs_err_vs_host": 3.814697265625e-06
+    },
+    {
+      "block_size": 64,
+      "warps_per_block": 2,
+      "grid_blocks": 262144,
+      "registers_per_thread": 10,
+      "register_spills": 0,
+      "shared_bytes_per_block": 0,
+      "api_max_active_blocks_per_sm": 24,
+      "theoretical_occupancy_pct": 100.0,
+      "achieved_occupancy_pct_runs": [
+        70.30085482296354,
+        71.98977853492335,
+        72.0060907706643,
+        72.15252656246444,
+        72.49503458667215
+      ],
+      "achieved_occupancy_pct_median": 72.0060907706643,
+      "time_ms_median": 0.45153599977493286,
+      "time_ms_q1": 0.4504000023007393,
+      "time_ms_q3": 0.4522159993648529,
+      "correct": true,
+      "max_abs_err_vs_host": 3.814697265625e-06
+    },
+    {
+      "block_size": 128,
+      "warps_per_block": 4,
+      "grid_blocks": 131072,
+      "registers_per_thread": 10,
+      "register_spills": 0,
+      "shared_bytes_per_block": 0,
+      "api_max_active_blocks_per_sm": 12,
+      "theoretical_occupancy_pct": 100.0,
+      "achieved_occupancy_pct_runs": [
+        77.31035910172824,
+        77.82615985245862,
+        77.80602501670964,
+        77.12159863945578,
+        77.65804392358629
+      ],
+      "achieved_occupancy_pct_median": 77.65804392358629,
+      "time_ms_median": 0.45315200090408325,
+      "time_ms_q1": 0.44939199835062027,
+      "time_ms_q3": 0.458392009139061,
+      "correct": true,
+      "max_abs_err_vs_host": 3.814697265625e-06
+    },
+    {
+      "block_size": 256,
+      "warps_per_block": 8,
+      "grid_blocks": 65536,
+      "registers_per_thread": 10,
+      "register_spills": 0,
+      "shared_bytes_per_block": 0,
+      "api_max_active_blocks_per_sm": 6,
+      "theoretical_occupancy_pct": 100.0,
+      "achieved_occupancy_pct_runs": [
+        74.37445627894948,
+        74.71450946888794,
+        74.51755929340558,
+        74.72587329780936,
+        74.7743648084945
+      ],
+      "achieved_occupancy_pct_median": 74.71450946888794,
+      "time_ms_median": 0.4562560021877289,
+      "time_ms_q1": 0.4543039947748184,
+      "time_ms_q3": 0.45948799699544907,
+      "correct": true,
+      "max_abs_err_vs_host": 3.814697265625e-06
+    },
+    {
+      "block_size": 512,
+      "warps_per_block": 16,
+      "grid_blocks": 32768,
+      "registers_per_thread": 10,
+      "register_spills": 0,
+      "shared_bytes_per_block": 0,
+      "api_max_active_blocks_per_sm": 3,
+      "theoretical_occupancy_pct": 100.0,
+      "achieved_occupancy_pct_runs": [
+        68.08822867431915,
+        68.18372454846784,
+        68.2208423326134,
+        68.19931642381724,
+        68.08644471402255
+      ],
+      "achieved_occupancy_pct_median": 68.18372454846784,
+      "time_ms_median": 0.4721919894218445,
+      "time_ms_q1": 0.47040000557899475,
+      "time_ms_q3": 0.4739600047469139,
+      "correct": true,
+      "max_abs_err_vs_host": 3.814697265625e-06
+    },
+    {
+      "block_size": 1024,
+      "warps_per_block": 32,
+      "grid_blocks": 16384,
+      "registers_per_thread": 10,
+      "register_spills": 0,
+      "shared_bytes_per_block": 0,
+      "api_max_active_blocks_per_sm": 1,
+      "theoretical_occupancy_pct": 66.66666666666666,
+      "achieved_occupancy_pct_runs": [
+        46.27439696926102,
+        46.15817868274084,
+        46.12738173713783,
+        46.17845919436244,
+        46.12667459373762
+      ],
+      "achieved_occupancy_pct_median": 46.15817868274084,
+      "time_ms_median": 0.6686400175094604,
+      "time_ms_q1": 0.6678320020437241,
+      "time_ms_q3": 0.6722240149974823,
+      "correct": true,
+      "max_abs_err_vs_host": 3.814697265625e-06
+    }
+  ],
+  "plateau_theoretical_occupancy_pct": 100.0,
+  "plateau_onset_block_size": 64,
+  "fastest_block_size": 64,
+  "condition_1_achieved_within_10pp_at_best": false,
+  "condition_2_fastest_within_one_step_of_plateau_onset": true,
+  "verdict": "PARTIALLY SUPPORTED",
+  "verdict_rule": "supported if achieved occupancy is within 10 percentage points of theoretical at the best (fastest measured) block size AND the fastest block size lies within one sweep step of the onset of the theoretical plateau; partially supported if only one holds; refuted if neither (PREREGISTRATION.md M2, frozen)"
+}
