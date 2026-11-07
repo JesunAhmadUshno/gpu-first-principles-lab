@@ -43,3 +43,14 @@ A unit without all five parts for its kind is open, not done.
 - Em dash count is 0 in every file in this repo.
 - No result is written anywhere before its run exists. Scaffold text claims no results.
 - Measurements name the device. A results table without a device name fails review.
+
+## Environment record
+
+A laptop GPU changes its clocks with temperature and power source, so every results table carries this record, captured in the same session as the run:
+
+- Device: host name and GPU model, as in README.md.
+- Driver version and CUDA toolkit version (nvidia-smi and nvcc --version).
+- Power source: AC or battery, and the operating system power mode.
+- GPU clocks and temperature at the start and end of the timed runs (nvidia-smi --query-gpu=clocks.sm,clocks.mem,temperature.gpu --format=csv).
+- Persistence mode, and whether any other GPU process was running.
+- Date, and the commit hash of the harness that produced the table.
