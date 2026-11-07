@@ -4,6 +4,8 @@ A study lab for GPU architecture, learned from first principles and proven by me
 
 Status: SCAFFOLD ONLY. NO RESULTS YET. Every measured claim arrives through a pre-registered unit.
 
+**Live dashboard:** [jesunahmadushno.github.io/gpu-first-principles-lab](https://jesunahmadushno.github.io/gpu-first-principles-lab/), with the study map, the frozen verdict rules and three what-if tools that run in your browser. Source in `site/`; every count and threshold is parsed from this repo's markdown at build time, and no measured number appears because none exists yet.
+
 ## What this lab is
 
 This lab works through a structured GPU architecture curriculum one unit at a time and converts each concept into evidence. A unit is not finished when the reading is done. A unit is finished when the concept has been restated in our own words, checked against a primary source, implemented in original code, measured on the named hardware, and closed with a published verdict.
@@ -45,6 +47,8 @@ Primary sources used for verification:
 - STUDY-MAP.md: the unit table, source chapters, and what each unit feeds.
 - PREREGISTRATION.md: the frozen protocols and verdict rules for the first micro-studies.
 - units/: one folder per unit, added as units open.
+- docs/research-review.md: the design graded against a research rubric, with each open gap and what closes it.
+- site/: the live dashboard (React and Vite), built and published by .github/workflows/pages.yml.
 
 ## Licence
 
