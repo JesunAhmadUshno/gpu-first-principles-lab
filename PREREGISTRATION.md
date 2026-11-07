@@ -51,7 +51,7 @@ Protocol:
 
 Frozen verdict rule: supported if the median per-launch overhead is below 10 microseconds; refuted otherwise. The measured figure is reported either way.
 
-RESULTS: NOT YET RUN
+RESULTS (2026-11-07, BlackBox, RTX 5050 Laptop GPU): median per-launch overhead 12.28 microseconds across 10 repetitions of 1000 launches (spread 8.07 to 13.27 microseconds), above the frozen 10 microsecond line; a first execution from the idle power state gave a median of 14.87 microseconds and the same verdict. Verdict: REFUTED. Full record: units/u06-hardware-hierarchy/STUDY.md and m3a_results.json.
 
 ### M3b: Naive vs tiled GEMM (Unit U12)
 
