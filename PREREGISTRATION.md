@@ -67,7 +67,7 @@ Protocol:
 
 Frozen verdict rule: hypothesis supported if the tiled kernel's median time at 1024 is at most two thirds of the naive kernel's median time (a speedup of at least 1.5x); partially supported if the speedup is above 1.1x and below 1.5x; refuted at or below 1.1x. All three sizes are reported regardless of the verdict.
 
-RESULTS: NOT YET RUN
+RESULTS (2026-11-07, BlackBox, RTX 5050 Laptop GPU): naive median times 0.3181 ms, 2.3973 ms, 19.0402 ms at sizes 512, 1024, 2048 (about 900 GFLOP/s at every size); tiled median times 0.0584 ms, 0.2782 ms, 1.9895 ms (4,596.5, 7,718.5, 8,635.5 GFLOP/s); speedup at the verdict size 1024 is 8.62x. Correctness passed everywhere (max abs error 9.9e-05 on the full size 512 check, at most 2.9e-04 on the spot samples). Verdict: SUPPORTED. Full record: units/u12-shared-memory-and-tiling/STUDY.md and m3b_results.json.
 
 ### M3c: Tuned tiled GEMM vs the library call (Unit U13)
 
