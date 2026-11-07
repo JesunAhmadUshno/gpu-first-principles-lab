@@ -1,0 +1,8 @@
+{
+  "_source": "PREREGISTRATION.md. tests/test_preregistration.py and site/src/lab.check.mjs fail if any value here drifts from the markdown.",
+  "M1": { "log2Elements": 24, "bytesPerElement": 4, "mibPerArray": 64, "supportedAtLeast": 5, "partialAtLeast": 2, "warmup": 3, "timed": 20 },
+  "M2": { "withinPercentagePoints": 10, "blockSizes": [32, 64, 128, 256, 512, 1024] },
+  "M3a": { "supportedBelowMicroseconds": 10, "launches": 1000, "repeats": 10 },
+  "M3b": { "sizes": [512, 1024, 2048], "verdictSize": 1024, "supportedAtLeast": 1.5, "partialAbove": 1.1 },
+  "M3c": { "verdictSize": 2048, "supportedAtLeast": 0.25, "partialAtLeast": 0.1 }
+}
