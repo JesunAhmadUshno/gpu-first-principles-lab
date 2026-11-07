@@ -84,17 +84,3 @@ Protocol:
 Frozen verdict rule: supported if the ratio at 2048 is at least 0.25; partially supported if at least 0.10 and below 0.25; refuted below 0.10. The gap is published either way.
 
 RESULTS: NOT YET RUN
-
-## Amendments
-
-### Amendment 1, 2026-11-07 (before any run)
-
-Reason: a review of this file found three places where the protocol left a choice to be made after the data could be seen. No study has been run, no measurement code exists, and no verdict rule is changed by this entry. Every threshold above stands as written.
-
-- M1 strided mapping, pinned. Variant B uses exactly f(i) = (i mod (N/32)) * 32 + floor(i / (N/32)) with N = 2^24. This is a transpose of a 32 by N/32 index grid, so it is a permutation of [0, N) and every output element has exactly one expected input, which keeps the host correctness check well defined. tests/test_preregistration.py checks the bijection on a small N.
-- M2 grid sizing, defined. One element per thread; the grid is ceil(2^24 / block size) blocks at every block size.
-- M2 plateau onset, defined. The onset of the theoretical plateau is the smallest swept block size whose theoretical occupancy equals the maximum theoretical occupancy over the whole sweep. "Within one sweep step" means the fastest measured block size is the onset or an adjacent entry in the sweep list.
-- M2 achieved occupancy, defined. Achieved occupancy is the profiler's achieved-occupancy metric for the kernel (Nsight Compute, active warps as a percentage of the per-SM maximum). If that metric cannot be collected on this device, the first condition of the M2 rule is scored as not holding, so the verdict can be at most partially supported.
-- M3a construct, clarified. Back-to-back launches timed as one sequence measure the per-launch cost under pipelined enqueue (launch throughput), not the latency of one isolated launch. The verdict rule applies to that throughput figure and the results table will name it so. A secondary figure, 1000 launches each followed by a stream synchronize and timed on the host clock, is reported alongside as single-launch latency. It does not enter the verdict.
-- Uncertainty reporting, added. Alongside every median, each results table reports the interquartile range and a percentile bootstrap 95 percent interval of the median (10,000 resamples, seed recorded). These are descriptive; the frozen rules still read the medians.
-- Environment, added. Every results table carries the environment record defined in SPEC.md (driver, CUDA version, clocks, power source, temperature).

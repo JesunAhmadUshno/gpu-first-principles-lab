@@ -46,7 +46,7 @@ A unit without all five parts for its kind is open, not done.
 
 ## Environment record
 
-A laptop GPU changes its clocks with temperature and power source, so every results table carries this record, captured in the same session as the run:
+A laptop GPU changes its clocks with temperature and power source, so every results table from now on carries this record, captured in the same session as the run. The four runs of 2026-11-07 (M1, M2, M3a, M3b) predate this section and carry only part of it: torch and Triton versions in every record, and an nvidia-smi clock, utilisation, temperature and power line before and after the run in M2, M3a and M3b.
 
 - Device: host name and GPU model, as in README.md.
 - Driver version and CUDA toolkit version (nvidia-smi and nvcc --version).

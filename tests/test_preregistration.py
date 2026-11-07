@@ -13,14 +13,19 @@ SKIP_DIRS = {".git", "node_modules", "dist", ".rubric", "__pycache__", ".venv"}
 
 
 def study_sections():
-    """Split the protocol part of the file (before any amendment) into study id -> section text."""
-    body = PREREG.split("## Amendments")[0]
-    parts = re.split(r"^#{2,3} (M\d[a-z]?): ", body, flags=re.M)
+    """Split the file into study id -> section text."""
+    parts = re.split(r"^#{2,3} (M\d[a-z]?): ", PREREG, flags=re.M)
     return {parts[i]: parts[i + 1] for i in range(1, len(parts), 2)}
 
 
+RUN_LINE = re.compile(
+    r"^RESULTS \(\d{4}-\d{2}-\d{2}, BlackBox, RTX 5050 Laptop GPU\): .*"
+    r"Verdict: (SUPPORTED|PARTIALLY SUPPORTED|REFUTED)\. Full record: (units/[\w-]+/)STUDY\.md and (m\d[a-z]?_results\.json)\.$"
+)
+
+
 def strided_index(i, n):
-    """The M1 strided mapping as pinned in the 2026-11-07 amendment."""
+    """The M1 strided mapping, as the protocol states it and m1_copy_bandwidth.py runs it."""
     s = n // 32
     return (i % s) * 32 + i // s
 
@@ -33,12 +38,22 @@ def number(pattern):
 
 
 class TestPreregistration(unittest.TestCase):
-    def test_every_study_has_a_frozen_rule_and_no_results(self):
+    def test_every_study_has_a_frozen_rule_and_one_results_line(self):
+        """RESULTS is NOT YET RUN, or a dated run on the device of record with one verdict and a raw record."""
         sections = study_sections()
         for study in STUDIES:
             self.assertIn(study, sections)
             self.assertIn("Frozen verdict rule", sections[study], study)
-            self.assertIn("RESULTS: NOT YET RUN", sections[study], study)
+            lines = [l for l in sections[study].splitlines() if l.startswith("RESULTS")]
+            self.assertEqual(len(lines), 1, study)
+            if lines[0] == "RESULTS: NOT YET RUN":
+                continue
+            run = RUN_LINE.match(lines[0])
+            self.assertIsNotNone(run, study)
+            record = json.loads((REPO_ROOT / (run.group(2) + run.group(3))).read_text(encoding="utf-8"))
+            self.assertEqual(record["verdict"], run.group(1), study)
+            self.assertEqual(record["machine"], "BlackBox", study)
+            self.assertIn("RTX 5050 Laptop", record["device"], study)
 
     def test_device_of_record(self):
         self.assertIn("Device for every study below: BlackBox, NVIDIA GeForce RTX 5050 Laptop, 8 GB VRAM", PREREG)
@@ -49,8 +64,11 @@ class TestPreregistration(unittest.TestCase):
         # One warp of the strided variant touches 32 addresses 32 floats apart.
         self.assertEqual([strided_index(i, n) for i in range(32)], [32 * i for i in range(32)])
 
-    def test_amendment_pins_the_m1_mapping(self):
-        self.assertIn("f(i) = (i mod (N/32)) * 32 + floor(i / (N/32))", PREREG)
+    def test_m1_harness_runs_the_protocol_mapping(self):
+        self.assertIn("(i mod (N/32)) * 32 + i / (N/32)", PREREG)
+        code = (REPO_ROOT / "units" / "u02-feeding-the-beast" / "m1_copy_bandwidth.py").read_text(encoding="utf-8")
+        self.assertIn("src = (idx % MVAL) * 32 + idx // MVAL", code)
+        self.assertIn("M = N // 32", code)
 
 
 class TestThresholdContract(unittest.TestCase):

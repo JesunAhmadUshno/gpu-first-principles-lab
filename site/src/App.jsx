@@ -5,26 +5,39 @@ import readmeMd from '../../README.md?raw';
 import specMd from '../../SPEC.md?raw';
 import reviewMd from '../../docs/research-review.md?raw';
 import P from './prereg.json';
+import BOOT from '../../analysis/bootstrap_medians.json';
 import {
   parseStudyMap, parsePrereg, parseReadme, parseContract, parseUnitStudy, parseTable, verdict,
   m1Elements, m1BytesMoved, gbPerSecond, gemmFlops, gflopsPerSecond,
   coalescedIndex, stridedIndex, isPermutation, warpAddresses, segmentsTouched,
+  median, recordedM1, recordedM2, recordedM3a, recordedM3b, studyIdOf,
 } from './lab.js';
 
 // Everything below is parsed from the repo at build time.
 const unitFiles = import.meta.glob('../../units/*/STUDY.md', { query: '?raw', import: 'default', eager: true });
 const UNITS = Object.entries(unitFiles).map(([path, md]) => parseUnitStudy(md, path)).sort((a, b) => a.unit.localeCompare(b.unit));
-const STUB = new Set(UNITS.map((u) => u.unit));
-const MAP = parseStudyMap(studyMapMd).map((r) => ({
-  ...r, status: r.feed === 'AWAITING SOURCE' ? 'awaiting source' : STUB.has(r.unit) ? 'stub' : 'not opened',
-}));
+const OPENED = new Set(UNITS.map((u) => u.unit));
 const PREREG = parsePrereg(preregMd);
+const RAN = new Set(PREREG.studies.filter((s) => s.results.run).map((s) => s.id));
+const MAP = parseStudyMap(studyMapMd).map((r) => ({
+  ...r, status: r.feed === 'AWAITING SOURCE' ? 'awaiting source' : RAN.has(r.protocol) ? 'measured' : OPENED.has(r.unit) ? 'opened' : 'not opened',
+}));
+// Recorded runs (units/*/m*_results.json); every figure below is recomputed from the raw arrays.
+const resultFiles = import.meta.glob('../../units/*/m*_results.json', { import: 'default', eager: true });
+const REC = Object.fromEntries(Object.entries(resultFiles).map(([path, j]) => [studyIdOf(path), { ...j, path: path.replace('../../', '') }]));
+const R1 = REC.M1 && recordedM1(REC.M1);
+const R2 = REC.M2 && recordedM2(REC.M2, P);
+const R3A = REC.M3a && recordedM3a(REC.M3a);
+const R3B = REC.M3b && recordedM3b(REC.M3b, P);
+// Descriptive 95 percent intervals from analysis/bootstrap_medians.py; the frozen rules read the medians.
+const ci = (k, d) => BOOT[k] ? ` Bootstrap 95% interval ${BOOT[k].lo.toFixed(d)} to ${BOOT[k].hi.toFixed(d)} (analysis/bootstrap_medians.json).` : '';
 const README = parseReadme(readmeMd);
 const CONTRACT = parseContract(specMd);
 const SCORECARD = parseTable(reviewMd, 'Scorecard');
 const OPEN_GAPS = parseTable(reviewMd, 'What remains open, and exactly what closes it');
 const N_UNITS = MAP.filter((r) => r.unit.startsWith('U')).length;
-const N_RUN = PREREG.studies.filter((s) => s.results !== 'NOT YET RUN').length;
+const N_RUN = RAN.size;
+const RUN_DATES = [...new Set(PREREG.studies.filter((s) => s.results.run).map((s) => s.results.when.split(',')[0]))];
 
 const REPO = 'https://github.com/JesunAhmadUshno/gpu-first-principles-lab';
 const blob = (p) => `${REPO}/blob/main/${p}`;
@@ -36,7 +49,7 @@ const TONE = { supported: 'good', partial: 'warn', refuted: 'bad' };
 const VLABEL = { supported: 'Supported', partial: 'Partially supported', refuted: 'Refuted' };
 
 const SECTIONS = [['top', 'Overview', '◎'], ['method', 'Method', '①'], ['map', 'Study map', '▦'], ['feeds', 'Feeds', '⇢'], ['prereg', 'Pre-registration', '§'],
-  ['verdict', 'Verdict playground', '⚖'], ['calc', 'Workload calculator', '∑'], ['stride', 'Stride visualizer', '⋮'], ['units', 'Unit questions', '?'], ['rigour', 'Rigour', '✓']];
+  ['results', 'Recorded results', '◷'], ['verdict', 'Verdict playground', '⚖'], ['calc', 'Workload calculator', '∑'], ['stride', 'Stride visualizer', '⋮'], ['units', 'Unit questions', '?'], ['rigour', 'Rigour', '✓']];
 
 function useReveal() {
   useEffect(() => {
@@ -60,7 +73,7 @@ function MenuBar() {
       <a className="m" href={blob('PREREGISTRATION.md')}>Pre-registration</a>
       <a className="m" href={blob('docs/research-review.md')}>Review</a>
       <span className="spacer" />
-      <span className="status warn"><i /> {N_RUN === 0 ? 'No results yet' : `${N_RUN} run`}</span>
+      <span className={`status ${N_RUN ? 'ok' : 'warn'}`}><i /> {N_RUN === 0 ? 'No results yet' : `${N_RUN} of ${PREREG.studies.length} run`}</span>
       <a href={REPO}>GitHub ↗</a>
       <span className="clock">{now.toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' })}</span>
     </div>
@@ -116,6 +129,7 @@ export default function App() {
       <StudyMap />
       <Feeds />
       <Prereg />
+      <Results />
       <VerdictPlayground />
       <Calculator />
       <Stride />
@@ -125,7 +139,7 @@ export default function App() {
       <footer>
         <p>Study map source: <a href="https://github.com/BEFORE-GPU-ENGINEERING/BEFORE-GPU-ENGINEERING">BEFORE-GPU-ENGINEERING</a> (MIT licence), cited for chapter titles and ranges only; no content is reproduced.
           Primary sources for verification: {README.primarySources.join('; ')}.</p>
-        <p>Code and text: Apache-2.0. Every count and threshold on this page is parsed from the repo's markdown at build time; the playground, calculator and visualizer run in your browser on inputs you choose. No measurement exists yet.</p>
+        <p>Code and text: Apache-2.0. Every count and threshold on this page is parsed from the repo's markdown at build time. Measured figures are recorded runs ({RUN_DATES.join(', ') || 'none yet'}, BlackBox), recomputed from the raw arrays in units/*/m*_results.json; this page never reruns them. The playground, calculator and visualizer run in your browser on inputs you choose.</p>
       </footer>
     </div>
   );
@@ -136,16 +150,17 @@ function Hero() {
   return (
     <header className="card hero window" id="top" data-title="README.md · gpu-first-principles-lab">
       <div className="head">
-        <p className="eyebrow">Pre-registered study lab · scaffold stage</p>
-        <span className="pill warn">● Scaffold: no results yet</span>
+        <p className="eyebrow">Pre-registered study lab · {N_RUN ? `first measurements recorded ${RUN_DATES.join(', ')}` : 'scaffold stage'}</p>
+        <span className={`pill ${N_RUN ? 'info' : 'warn'}`}>● {N_RUN} of {n} protocols run, {n - N_RUN} still open</span>
       </div>
-      <h1>{cap(word(N_UNITS))} GPU units, {word(n)} pre-registered bets, <em>{word(N_RUN)} results</em> so far.</h1>
+      <h1>{cap(word(N_UNITS))} GPU units, {word(n)} pre-registered bets, <em>{word(N_RUN)} {N_RUN === 1 ? 'result' : 'results'}</em> so far.</h1>
       <p className="sub">
-        Every verdict rule is frozen before the first kernel runs. This lab learns GPU architecture from first principles and closes each unit only with a measurement taken under a protocol written in advance.
-        Nothing has been measured yet, so this page shows the design itself: the study map, the frozen rules, and tools to see what each rule would conclude.
+        Every verdict rule was frozen before the first kernel ran. This lab learns GPU architecture from first principles and closes each unit only with a measurement taken under a protocol written in advance.
+        {N_RUN ? ` ${cap(word(N_RUN))} of the ${word(n)} protocols now have a recorded run and a verdict; the rest are still open. This page shows the design, the recorded results as the repo stores them, and tools to see what each rule concludes.` : ' Nothing has been measured yet, so this page shows the design itself.'}
       </p>
       <div className="actions">
-        <a className="btn primary" href="#verdict">Try the verdict rules</a>
+        <a className="btn primary" href="#results">See the recorded results</a>
+        <a className="btn ghost" href="#verdict">Try the verdict rules</a>
         <a className="btn ghost" href={blob('PREREGISTRATION.md')}>Read the pre-registration</a>
       </div>
       <div className="strip">
@@ -155,8 +170,8 @@ function Hero() {
       <div className="tiles">
         <div className="tile"><div className="num">{N_UNITS}</div><div className="cap">units in the study map, U01 to U{String(N_UNITS).padStart(2, '0')}</div></div>
         <div className="tile"><div className="num">{n}</div><div className="cap">protocols with a frozen verdict rule</div></div>
-        <div className="tile"><div className="num">{N_RUN}</div><div className="cap">protocols run (each reads RESULTS: NOT YET RUN)</div></div>
-        <div className="tile"><div className="num">{UNITS.length}</div><div className="cap">unit folders opened as stubs, no answers yet</div></div>
+        <div className="tile"><div className="num">{N_RUN}</div><div className="cap">protocols run, read from their RESULTS lines ({PREREG.studies.map((s) => `${s.id} ${s.results.run ? VLABEL[s.results.verdict].toLowerCase() : 'not run'}`).join(', ')})</div></div>
+        <div className="tile"><div className="num">{UNITS.length}</div><div className="cap">unit folders opened under units/, concept answers not yet written</div></div>
       </div>
     </header>
   );
@@ -195,7 +210,7 @@ function StudyMap() {
         <div>
           <p className="eyebrow">Study map explorer</p>
           <h2>{cap(word(N_UNITS))} units, grouped for <em>measurement</em>.</h2>
-          <p className="sub">Parsed from STUDY-MAP.md. Status comes from the repo itself: a unit is a stub when its folder exists under units/, otherwise not opened. Select a unit to see its concepts and primary source.</p>
+          <p className="sub">Parsed from STUDY-MAP.md. Status comes from the repo itself: measured when its protocol has a recorded RESULTS line, opened when its folder exists under units/, otherwise not opened. Select a unit to see its concepts and primary source.</p>
         </div>
       </div>
       <div className="filters">
@@ -217,7 +232,7 @@ function StudyMap() {
                 <td>{r.kind}</td>
                 <td className="mono">{r.protocol || '·'}</td>
                 <td><span className={`pill ${r.feed === 'DIRECT' ? 'info' : r.feed === 'AWAITING SOURCE' ? 'warn' : ''}`}>{r.feed}</span></td>
-                <td><span className={`pill ${r.status === 'stub' ? 'good' : 'muted'}`}>{r.status}</span></td>
+                <td><span className={`pill ${r.status === 'measured' ? 'good' : r.status === 'opened' ? 'info' : 'muted'}`}>{r.status}</span></td>
               </tr>
             ))}
           </tbody>
@@ -241,7 +256,8 @@ function Feeds() {
     { k: 'Coalescing upgrade', from: direct.filter((u) => u === 'U11'), gate: true },
     { k: 'Tiled GEMM progression', from: direct.filter((u) => u !== 'U11'), gate: true },
     { k: 'Occupancy tuning pass and register-spilling case study', from: indirect, gate: false },
-  ];
+  ].map((it) => ({ ...it, measured: it.from.filter((u) => MAP.find((r) => r.unit === u).status === 'measured') }));
+  const gatedMeasured = items.filter((it) => it.gate).flatMap((it) => it.measured);
   const left = [...direct, ...indirect];
   const W = 960, rowH = 40, H = left.length * rowH + 40, ux = 130, ix = 560;
   const uy = (u) => 30 + left.indexOf(u) * rowH;
@@ -250,7 +266,9 @@ function Feeds() {
     <section id="feeds" className="card window reveal" data-title="feeds.svg">
       <p className="eyebrow">What each unit feeds</p>
       <h2>{cap(word(direct.length))} units <em>gate</em> kernel work; {word(indirect.length)} only inform it.</h2>
-      <p className="sub">A cuda-kernels-lab v1.1 item opens only when the unit feeding it has a measured verdict here. Solid lines gate; dashed lines inform. None of these verdicts exists yet, so every item downstream is still closed.</p>
+      <p className="sub">A cuda-kernels-lab v1.1 item opens only when the unit feeding it has a measured verdict here. Solid lines gate; dashed lines inform. {gatedMeasured.length
+          ? `Of the gating units, only ${gatedMeasured.join(', ')} has a recorded micro-study verdict; a gate needs every one of its units, so every gated item is still closed.`
+          : 'No gating unit has a recorded verdict yet, so every gated item is still closed.'}</p>
       <div style={{ overflowX: 'auto', marginTop: 16 }}><svg className="chart wideviz" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Graph of which study units gate or inform cuda-kernels-lab v1.1 items">
         {items.map((it, i) => it.from.map((u) => (
           <path key={it.k + u} d={`M${ux + 70},${uy(u)} C${(ux + ix) / 2},${uy(u)} ${(ux + ix) / 2},${iy(i)} ${ix - 10},${iy(i)}`}
@@ -270,7 +288,7 @@ function Feeds() {
           <g key={it.k}>
             <rect x={ix - 10} y={iy(i) - 18} width={W - ix} height="36" rx="10" fill={it.gate ? 'var(--primary-pale)' : 'var(--surface-strong)'} stroke="var(--border)" />
             <text x={ix + 6} y={iy(i) - 3} style={{ fill: 'var(--text)', fontSize: 13 }}>{it.k}</text>
-            <text x={ix + 6} y={iy(i) + 12}>{it.gate ? 'gated: closed until a verdict exists' : 'informed, not gated'}</text>
+            <text x={ix + 6} y={iy(i) + 12}>{it.gate ? `gated: ${it.measured.length}/${it.from.length} units measured, closed` : `informed, not gated (${it.measured.length}/${it.from.length} measured)`}</text>
           </g>
         ))}
         <text x={0} y={H - 4}>Foundation units, feeding no item directly: {foundation.join(', ')}</text>
@@ -288,7 +306,7 @@ function Prereg() {
         <div>
           <p className="eyebrow">Frozen protocols</p>
           <h2>{cap(word(PREREG.studies.length))} bets, each with its <em>verdict rule</em> written first.</h2>
-          <p className="sub">Read straight from PREREGISTRATION.md. Rules never change after the first run of their study; protocol details change only by a dated amendment.</p>
+          <p className="sub">Read straight from PREREGISTRATION.md. Rules never change after the first run of their study. Where a study has run, its RESULTS line is shown as the file records it.</p>
         </div>
         <div className="seg" role="tablist" aria-label="Study">
           {PREREG.studies.map((x) => <button key={x.id} role="tab" aria-selected={id === x.id} onClick={() => setId(x.id)}>{x.id}</button>)}
@@ -297,29 +315,103 @@ function Prereg() {
       <div className="prereg" role="tabpanel" aria-label={`${s.id}: ${s.title}`}>
         <div className="head" style={{ marginBottom: 8 }}>
           <h3>{s.id}: {s.title} <span className="hint">({s.units.join(', ')})</span></h3>
-          <span className="pill warn">RESULTS: {s.results}</span>
+          <span className={`pill ${s.results.run ? TONE[s.results.verdict] : 'warn'}`}>RESULTS: {s.results.label}</span>
         </div>
         <p><b>Hypothesis.</b> {s.hypothesis}</p>
         <ul className="protocol">{s.protocol.map((b) => <li key={b}>{b}</li>)}</ul>
         <div className="rule"><span className="eyebrow">Frozen verdict rule</span><p>{s.rule}</p></div>
+        {s.results.run && <div className="rule"><span className="eyebrow">Recorded result ({s.results.when})</span><p>{s.results.text}</p></div>}
       </div>
-      {PREREG.amendments.map((a) => (
-        <details className="amend" key={a.title}>
-          <summary>{a.title}: {a.items.length} clarifications, no verdict rule changed</summary>
-          <ul className="protocol">{a.items.map((b) => <li key={b}>{b}</li>)}</ul>
-        </details>
-      ))}
     </section>
   );
 }
 
-function BandLine({ label, value, min, max, bands, ticks, show }) {
+function RecTile({ id, title, children, foot }) {
+  const st = PREREG.studies.find((x) => x.id === id);
+  return (
+    <div className="tile">
+      <div className="rec-head"><h3>{id}: {title}</h3>{st.results.run && <span className={`pill ${TONE[st.results.verdict]}`}>{VLABEL[st.results.verdict]}</span>}</div>
+      {children}
+      <p className="hint" style={{ margin: '8px 0 0' }}>{foot} Raw record: <a href={blob(REC[id].path)}>{REC[id].path.split('/').pop()}</a>.</p>
+    </div>
+  );
+}
+
+function Results() {
+  if (!N_RUN) return null;
+  const notRun = PREREG.studies.filter((x) => !x.results.run).map((x) => x.id);
+  const W = 460;
+  return (
+    <section id="results" className="card window reveal" data-title="units/*/m*_results.json · recorded">
+      <div className="head">
+        <div>
+          <p className="eyebrow">Recorded results</p>
+          <h2>{cap(word(N_RUN))} runs, judged by rules <em>written before</em> them.</h2>
+          <p className="sub">Recorded on {README.host} ({REC[[...RAN][0]].device}), {RUN_DATES.join(', ')}. Each figure is recomputed in your browser from the raw timing arrays in the repo's results files and checked at build time against the stored summary and the RESULTS line. Still not run: {notRun.join(', ') || 'none'}.</p>
+        </div>
+        <span className="pill info">recorded, not live</span>
+      </div>
+      <div className="grid2">
+        {R1 && <RecTile id="M1" title="coalesced vs strided copy" foot={`Median of ${REC.M1.timed_launches} timed launches per variant, ${fmt(REC.M1.bytes_moved_per_launch)} bytes moved per launch. Ratio ${R1.ratio.toFixed(2)}x against a ${P.M1.supportedAtLeast}x line for supported.${ci('M1_ratio_of_median_bandwidths', 2)}`}>
+          <svg className="chart" viewBox={`0 0 ${W} 86`} role="img" aria-label={`M1 median bandwidth: coalesced ${R1.coalesced.toFixed(1)} GB/s, strided ${R1.strided.toFixed(1)} GB/s`}>
+            {[['coalesced', R1.coalesced], ['strided', R1.strided]].map(([k, v], i) => (
+              <g key={k} transform={`translate(0 ${i * 40 + 6})`}>
+                <text x={0} y={17} style={{ fill: 'var(--text)' }}>{k}</text>
+                <rect x={80} y={4} height={20} rx="5" width={(v / R1.coalesced) * (W - 190)} fill={i ? 'var(--primary-pale)' : 'var(--primary)'} stroke="var(--primary)" strokeOpacity="0.4" />
+                <text x={W} y={17} textAnchor="end">{v.toFixed(1)} GB/s</text>
+              </g>
+            ))}
+          </svg>
+        </RecTile>}
+        {R2 && <RecTile id="M2" title="occupancy against the theory curve" foot={`Fastest block size ${R2.best.block} (median ${R2.best.ms.toFixed(4)} ms); plateau onset ${R2.onset.block}. Achieved sits ${R2.gapPp.toFixed(1)} pp below theoretical there, outside the ${P.M2.withinPercentagePoints} pp band. Achieved occupancy is a runtime residency measurement, not a profiler metric.`}>
+          <svg className="chart" viewBox={`0 0 ${W} 150`} role="img" aria-label="M2 theoretical and achieved occupancy by block size">
+            {[0, 50, 100].map((t) => <g key={t}><line className="axis" x1={30} x2={W} y1={120 - t} y2={120 - t} /><text x={0} y={124 - t}>{t}%</text></g>)}
+            {R2.rows.map((r, i) => { const x = 44 + i * ((W - 44) / R2.rows.length); return (
+              <g key={r.block}>
+                <rect x={x} y={120 - r.theoretical} width={22} height={r.theoretical} rx="3" fill="var(--primary-pale)" stroke="var(--primary)" strokeOpacity="0.4"><title>theoretical {r.theoretical.toFixed(1)}%</title></rect>
+                <rect x={x + 24} y={120 - r.achieved} width={22} height={r.achieved} rx="3" fill="var(--primary)"><title>achieved {r.achieved.toFixed(1)}%</title></rect>
+                <text x={x + 23} y={136} textAnchor="middle" style={{ fill: 'var(--text)', fontWeight: r === R2.best ? 700 : 400 }}>{r.block}{r === R2.best ? ' ★' : ''}</text>
+              </g>); })}
+            <text x={44} y={150}>pale: theoretical · solid: achieved · ★ fastest · block size in threads</text>
+          </svg>
+        </RecTile>}
+        {R3A && <RecTile id="M3a" title="kernel launch overhead" foot={`${R3A.n} repetitions of ${fmt(R3A.launches)} back-to-back launches; median ${R3A.median.toFixed(2)} µs against a ${P.M3a.supportedBelowMicroseconds} µs line. The repetitions split into two groups (${R3A.min.toFixed(2)} to ${R3A.max.toFixed(2)} µs), and this is the second execution of the protocol; the unit file discloses the first.${ci('M3a_median_per_launch_us', 2)} That interval crosses the line, so the verdict is fragile.`}>
+          {(() => { const xs = REC.M3a.per_launch_us_by_repetition, top = Math.ceil(R3A.max / 5) * 5, y = (v) => 110 - (v / top) * 100; return (
+            <svg className="chart" viewBox={`0 0 ${W} 130`} role="img" aria-label={`M3a per-launch overhead by repetition, median ${R3A.median.toFixed(2)} microseconds`}>
+              {[0, top / 2, top].map((t) => <g key={t}><line className="axis" x1={30} x2={W} y1={y(t)} y2={y(t)} /><text x={0} y={y(t) + 4}>{t} µs</text></g>)}
+              <line x1={30} x2={W} y1={y(P.M3a.supportedBelowMicroseconds)} y2={y(P.M3a.supportedBelowMicroseconds)} stroke="var(--good)" strokeDasharray="5 4" />
+              <line x1={30} x2={W} y1={y(R3A.median)} y2={y(R3A.median)} stroke="var(--bad)" />
+              {xs.map((v, i) => <circle key={i} cx={50 + i * ((W - 70) / (xs.length - 1))} cy={y(v)} r="5" fill="var(--primary)"><title>repetition {i + 1}: {v.toFixed(2)} µs</title></circle>)}
+              <text x={W} y={y(P.M3a.supportedBelowMicroseconds) + 14} textAnchor="end">dashed: {P.M3a.supportedBelowMicroseconds} µs rule · solid: median</text>
+            </svg>); })()}
+        </RecTile>}
+        {R3B && <RecTile id="M3b" title="naive vs tiled GEMM" foot={`Median of ${REC.M3b.timed_launches} timed launches per size, GFLOP/s = 2N^3 / time. Speedup at N = ${P.M3b.verdictSize}: ${R3B.speedup.toFixed(2)}x against a ${P.M3b.supportedAtLeast}x line.${ci('M3b_speedup_at_1024', 2)} Both kernels are Triton.`}>
+          {(() => { const top = Math.max(...R3B.bySize.map((x) => x.tiledGflops)); return (
+            <svg className="chart" viewBox={`0 0 ${W} ${R3B.bySize.length * 44 + 4}`} role="img" aria-label="M3b naive and tiled GFLOP/s by matrix size">
+              {R3B.bySize.map((x, i) => (
+                <g key={x.n} transform={`translate(0 ${i * 44 + 2})`}>
+                  <text x={0} y={16} style={{ fill: 'var(--text)', fontWeight: x.n === P.M3b.verdictSize ? 700 : 400 }}>N = {x.n}</text>
+                  <rect x={70} y={2} height={16} rx="4" width={(x.tiledGflops / top) * (W - 190)} fill="var(--primary)" />
+                  <rect x={70} y={21} height={16} rx="4" width={Math.max(2, (x.naiveGflops / top) * (W - 190))} fill="var(--primary-pale)" stroke="var(--primary)" strokeOpacity="0.4" />
+                  <text x={W} y={15} textAnchor="end">tiled {fmt(x.tiledGflops)}</text>
+                  <text x={W} y={34} textAnchor="end">naive {fmt(x.naiveGflops)} · {x.speedup.toFixed(2)}x</text>
+                </g>
+              ))}
+            </svg>); })()}
+        </RecTile>}
+      </div>
+    </section>
+  );
+}
+
+function BandLine({ label, value, min, max, bands, ticks, show, rec }) {
   const W = 400, H = 50, l = 8, r = 8;
   const x = (v) => l + ((Math.max(min, Math.min(max, v)) - min) / (max - min)) * (W - l - r);
   return (
     <svg className="chart band" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${label}: verdict bands with the what-if value ${show}`}>
       {bands.map((b) => <rect key={b.v + b.from} x={x(b.from)} width={Math.max(0, x(b.to) - x(b.from))} y={14} height={12} rx="3" fill={`var(--${TONE[b.v]})`} opacity="0.35" />)}
       {ticks.map((t) => <g key={t}><line x1={x(t)} x2={x(t)} y1={10} y2={30} stroke="var(--text)" strokeOpacity="0.5" /><text x={x(t)} y={44} textAnchor="middle">{t}</text></g>)}
+      {rec != null && <g><path d={`M${x(rec)},12 l-6,-10 h12 z`} fill="var(--primary)" /><title>recorded result: {rec}</title></g>}
       <circle cx={x(value)} cy={20} r="7" fill="var(--text)" stroke="var(--surface-strong)" strokeWidth="2" />
     </svg>
   );
@@ -334,13 +426,13 @@ function VerdictPlayground() {
   const [pp, setPp] = useState(true);
   const [step, setStep] = useState(false);
   const rows = [
-    { id: 'M1', q: 'Median coalesced / strided bandwidth', v: r1, set: setR1, min: 0, max: m1.supportedAtLeast * 2, stepv: 0.1, show: `${r1.toFixed(1)}x`,
+    { id: 'M1', q: 'Median coalesced / strided bandwidth', v: r1, set: setR1, min: 0, max: m1.supportedAtLeast * 2, stepv: 0.1, show: `${r1.toFixed(1)}x`, rec: R1?.ratio, recShow: R1 && `${R1.ratio.toFixed(2)}x`,
       out: verdict.M1(r1, P), ticks: [m1.partialAtLeast, m1.supportedAtLeast],
       bands: [{ v: 'refuted', from: 0, to: m1.partialAtLeast }, { v: 'partial', from: m1.partialAtLeast, to: m1.supportedAtLeast }, { v: 'supported', from: m1.supportedAtLeast, to: m1.supportedAtLeast * 2 }] },
-    { id: 'M3a', q: 'Median per-launch cost, back-to-back', v: us, set: setUs, min: 0, max: a.supportedBelowMicroseconds * 3, stepv: 0.5, show: `${us.toFixed(1)} µs`,
+    { id: 'M3a', q: 'Median per-launch cost, back-to-back', v: us, set: setUs, min: 0, max: a.supportedBelowMicroseconds * 3, stepv: 0.5, show: `${us.toFixed(1)} µs`, rec: R3A?.median, recShow: R3A && `${R3A.median.toFixed(2)} µs`,
       out: verdict.M3a(us, P), ticks: [a.supportedBelowMicroseconds],
       bands: [{ v: 'supported', from: 0, to: a.supportedBelowMicroseconds }, { v: 'refuted', from: a.supportedBelowMicroseconds, to: a.supportedBelowMicroseconds * 3 }] },
-    { id: 'M3b', q: `Tiled over naive speedup at N = ${b.verdictSize}`, v: sp, set: setSp, min: 0, max: b.supportedAtLeast * 2, stepv: 0.01, show: `${sp.toFixed(2)}x`,
+    { id: 'M3b', q: `Tiled over naive speedup at N = ${b.verdictSize}`, v: sp, set: setSp, min: 0, max: b.supportedAtLeast * 2, stepv: 0.01, show: `${sp.toFixed(2)}x`, rec: R3B?.speedup, recShow: R3B && `${R3B.speedup.toFixed(2)}x`,
       out: verdict.M3b(sp, P), ticks: [b.partialAbove, b.supportedAtLeast],
       bands: [{ v: 'refuted', from: 0, to: b.partialAbove }, { v: 'partial', from: b.partialAbove, to: b.supportedAtLeast }, { v: 'supported', from: b.supportedAtLeast, to: b.supportedAtLeast * 2 }] },
     { id: 'M3c', q: `Lab GEMM / cuBLAS throughput at N = ${c.verdictSize}`, v: rc, set: setRc, min: 0, max: c.supportedAtLeast * 2, stepv: 0.005, show: rc.toFixed(3),
@@ -354,15 +446,16 @@ function VerdictPlayground() {
         <div>
           <p className="eyebrow">Verdict-rule playground</p>
           <h2>Move a hypothetical result and watch the <em>frozen rule</em> decide.</h2>
-          <p className="sub">The bands and thresholds come from site/src/prereg.json, which the repo tests prove matches PREREGISTRATION.md. The values are yours, not the lab's: no measurement exists yet.</p>
+          <p className="sub">The bands and thresholds come from site/src/prereg.json, which the repo tests prove matches PREREGISTRATION.md. The slider values are yours, not the lab's. Where a study has run, a triangle marks its recorded result (off-scale values sit at the end of the line).</p>
         </div>
-        <span className="pill warn">what-if: no measurement exists yet</span>
+        <span className="pill warn">what-if sliders · ▼ recorded</span>
       </div>
       <div className="vrows">
         {rows.map((r) => (
           <div className="vrow" key={r.id}>
             <Range label={`${r.id}: ${r.q} (what-if)`} value={r.v} min={r.min} max={r.max} step={r.stepv} onChange={r.set} show={r.show} />
-            <BandLine label={`${r.id} ${r.q}`} value={r.v} min={r.min} max={r.max} bands={r.bands} ticks={r.ticks} show={r.show} />
+            <div><BandLine label={`${r.id} ${r.q}`} value={r.v} min={r.min} max={r.max} bands={r.bands} ticks={r.ticks} show={r.show} rec={r.rec} />
+              <p className="hint" style={{ margin: 0 }}>{r.rec != null ? <>▼ recorded: {r.recShow}, {VLABEL[verdict[r.id](r.rec, P)].toLowerCase()}</> : 'not yet run'}</p></div>
             <span className={`pill ${TONE[r.out]}`}>{VLABEL[r.out]}</span>
           </div>
         ))}
@@ -372,7 +465,8 @@ function VerdictPlayground() {
             <label className="check"><input type="checkbox" checked={pp} onChange={(e) => setPp(e.target.checked)} /> Achieved within {P.M2.withinPercentagePoints} pp of theoretical at the best block size</label>
             <label className="check"><input type="checkbox" checked={step} onChange={(e) => setStep(e.target.checked)} /> Fastest block size within one sweep step of the plateau onset</label>
           </div>
-          <p className="hint" style={{ margin: 0 }}>Sweep: {P.M2.blockSizes.join(', ')} threads per block. Both conditions: supported. One: partial. Neither: refuted.</p>
+          <p className="hint" style={{ margin: 0 }}>Sweep: {P.M2.blockSizes.join(', ')} threads per block. Both conditions: supported. One: partial. Neither: refuted.
+            {R2 && <> ▼ Recorded: condition 1 {R2.withinPp ? 'held' : `failed (${R2.gapPp.toFixed(1)} pp gap)`}, condition 2 {R2.withinStep ? 'held' : 'failed'}, {VLABEL[verdict.M2(R2.withinPp, R2.withinStep)].toLowerCase()}.</>}</p>
           <span className={`pill ${TONE[m2]}`}>{VLABEL[m2]}</span>
         </div>
       </div>
@@ -395,15 +489,16 @@ function Calculator() {
         <div>
           <p className="eyebrow">Workload arithmetic</p>
           <h2>What the protocols will <em>divide by</em>.</h2>
-          <p className="sub">Bytes and FLOPs follow from the protocol constants alone. Type a hypothetical time to see the figure the protocol would report. No device peak is shown, because the repo states none.</p>
+          <p className="sub">Bytes and FLOPs follow from the protocol constants alone. Type a time to see the figure the protocol reports, or load a recorded median from the repo's results files. No device peak is shown, because the repo states none.</p>
         </div>
-        <span className="pill warn">inputs are hypothetical</span>
+        <span className="pill warn">your inputs · recorded medians labelled</span>
       </div>
       <div className="grid2">
         <div className="tile">
           <h3>M1 copy: effective bandwidth</h3>
           <p className="hint">2^{P.M1.log2Elements} float32 = {fmt(m1Elements(P))} elements, {P.M1.mibPerArray} MiB per array. Read plus write moves {fmt(bytes)} bytes ({fmt(bytes / 2 ** 20)} MiB) per launch.</p>
-          <NumberField label="Hypothetical kernel time" unit="ms" value={ms} onChange={setMs} min="0.001" step="0.001" />
+          <NumberField label="Kernel time" unit="ms" value={ms} onChange={setMs} min="0.001" step="0.001" />
+          {REC.M1 && <div className="chips">{['coalesced', 'strided'].map((v) => { const t = String(median(REC.M1.variants[v].times_ms)); return <button key={v} className="chip" onClick={() => setMs(t)}>Load recorded {v} median ({t} ms)</button>; })}</div>}
           <div className="out"><span className="big">{t > 0 ? fmt(gbPerSecond(bytes, t), 1) : '·'}</span> GB/s effective (bytes moved / time, GB = 10^9 bytes)</div>
         </div>
         <div className="tile">
@@ -413,8 +508,9 @@ function Calculator() {
             <div className="field"><label htmlFor="gemm-n">Matrix size N</label>
               <select id="gemm-n" value={n} onChange={(e) => setN(+e.target.value)}>{P.M3b.sizes.map((s) => <option key={s} value={s}>{s}</option>)}</select>
             </div>
-            <NumberField label="Hypothetical time" unit="ms" value={gms} onChange={setGms} min="0.001" step="0.001" />
+            <NumberField label="Time" unit="ms" value={gms} onChange={setGms} min="0.001" step="0.001" />
           </div>
+          {R3B && <div className="chips">{['naive', 'tiled'].map((k) => { const t = String(+R3B.bySize.find((x) => x.n === n)[k].toPrecision(6)); return <button key={k} className="chip" onClick={() => setGms(t)}>Load recorded {k} median at N = {n} ({t} ms)</button>; })}</div>}
           <div className="out"><span className="big">{g > 0 ? fmt(gflopsPerSecond(gemmFlops(n), g), 1) : '·'}</span> GFLOP/s for {fmt(gemmFlops(n))} FLOPs</div>
         </div>
       </div>
@@ -474,7 +570,7 @@ function Stride() {
           <p className="eyebrow">M1 index functions, live</p>
           <h2>Same warp, same data, <em>scattered</em> reads.</h2>
           <p className="sub">
-            Each grid is a small input array, 32 floats per row ({32 * bpe} bytes). Shaded cells are the addresses that lanes 0 to 31 of one warp read under f(i) = i and under the pinned strided mapping
+            Each grid is a small input array, 32 floats per row ({32 * bpe} bytes). Shaded cells are the addresses that lanes 0 to 31 of one warp read under f(i) = i and under the strided mapping the M1 harness runs,
             f(i) = (i mod (N/32)) * 32 + floor(i / (N/32)). The real study uses N = 2^{P.M1.log2Elements}; this view shrinks N so the pattern is visible.
           </p>
         </div>
@@ -492,13 +588,13 @@ function Stride() {
       </div>
       <div className="grid2">
         <Grid title="Variant A: f(i) = i" f={coalescedIndex} n={n} warp={w} upto={upto} />
-        <Grid title="Variant B: pinned strided mapping" f={stridedIndex} n={n} warp={w} upto={upto} />
+        <Grid title="Variant B: strided mapping" f={stridedIndex} n={n} warp={w} upto={upto} />
       </div>
       <div className="grid2" style={{ marginTop: 12 }}>
         <div className="tile"><div className="num">{segmentsTouched(co, seg, bpe)}</div><div className="cap">distinct {seg}-byte segments touched by the warp, variant A. First lanes read {co.slice(0, 4).join(', ')}, …</div></div>
         <div className="tile"><div className="num">{segmentsTouched(st, seg, bpe)}</div><div className="cap">distinct {seg}-byte segments touched by the warp, variant B. First lanes read {st.slice(0, 4).join(', ')}, …</div></div>
       </div>
-      <p className="hint" style={{ marginTop: 12 }}>Segment counts are arithmetic on addresses under the segment model you picked. How many transactions the RTX 5050 Laptop actually issues is what M1 will measure.</p>
+      <p className="hint" style={{ marginTop: 12 }}>Segment counts are arithmetic on addresses under the segment model you picked. How many transactions the RTX 5050 Laptop actually issues is not counted here.{R1 && ` What M1 recorded is the cost: ${R1.coalesced.toFixed(1)} GB/s coalesced against ${R1.strided.toFixed(1)} GB/s strided, a ${R1.ratio.toFixed(2)}x ratio.`}</p>
     </section>
   );
 }
@@ -508,7 +604,7 @@ function UnitQuestions() {
     <section id="units" className="card window reveal" data-title="units/">
       <p className="eyebrow">Open questions</p>
       <h2>{cap(word(UNITS.length))} units opened, <em>no answers</em> written yet.</h2>
-      <p className="sub">The questions each stub commits to, read from units/*/STUDY.md. A box is ticked only when an answer is written in original words and verified against the unit's primary source.</p>
+      <p className="sub">The questions each unit commits to, read from units/*/STUDY.md. Units with a recorded micro-study still owe these concept answers before they close. A box is ticked only when an answer is written in original words and verified against the unit's primary source.</p>
       <div className="ugrid" style={{ marginTop: 16 }}>
         {UNITS.map((u) => (
           <div className="tile" key={u.unit}>
@@ -529,8 +625,8 @@ function Rigour() {
   return (
     <section id="rigour" className="card window reveal" data-title="rubric.md · research review">
       <p className="eyebrow">Research rigour and limitations</p>
-      <h2>An honest scorecard of the <em>design</em>, before any data.</h2>
-      <p className="sub">Read from <a href={blob('docs/research-review.md')}>docs/research-review.md</a>. Grades cover the design and process only; outcomes cannot be graded until runs exist.</p>
+      <h2>An honest scorecard of the design <em>and the first runs</em>.</h2>
+      <p className="sub">Read from <a href={blob('docs/research-review.md')}>docs/research-review.md</a>, which grades the protocols and the {word(N_RUN)} recorded runs, including where the runs are weak.</p>
       <div style={{ overflowX: 'auto', marginTop: 12 }}>
         <table className="stack">
           <thead><tr><th>Criterion</th><th>Grade</th><th>Status</th><th>Note</th></tr></thead>

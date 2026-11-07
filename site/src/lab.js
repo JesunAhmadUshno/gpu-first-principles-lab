@@ -45,7 +45,7 @@ export function parsePrereg(md) {
       hypothesis: ls.find((l) => l.startsWith('Hypothesis: ')).slice(12),
       protocol: ls.filter((l) => l.startsWith('- ')).map((l) => l.slice(2)),
       rule: rule.slice(21),
-      results: ls.find((l) => l.startsWith('RESULTS: ')).slice(9),
+      results: parseResultsLine(ls.find((l) => /^RESULTS\b/.test(l)) || ''),
     });
   }
   const amendments = amendText.split(/^### /m).slice(1).map((a) => ({
@@ -53,6 +53,15 @@ export function parsePrereg(md) {
   }));
   const device = (body.match(/Device for every study below: (.+?)\. Timing/) || [])[1] || '';
   return { studies, amendments, device };
+}
+
+// "RESULTS: NOT YET RUN" or "RESULTS (date, device): ... Verdict: PARTIALLY SUPPORTED. ..."
+const VERDICT_WORD = { 'SUPPORTED': 'supported', 'PARTIALLY SUPPORTED': 'partial', 'REFUTED': 'refuted' };
+export function parseResultsLine(l) {
+  const m = l.match(/^RESULTS \(([^)]*)\): (.*)$/);
+  if (!m) return { run: false, label: l.replace(/^RESULTS:\s*/, '') || 'NOT YET RUN' };
+  const v = (m[2].match(/Verdict: ([A-Z ]+?)\./) || [])[1];
+  return { run: true, when: m[1], text: m[2], verdictWord: v, verdict: VERDICT_WORD[v], label: v };
 }
 
 export function parseReadme(md) {
@@ -101,7 +110,7 @@ export const gbPerSecond = (bytes, ms) => bytes / 1e9 / (ms / 1e3);
 export const gemmFlops = (n) => 2 * n ** 3;
 export const gflopsPerSecond = (flops, ms) => flops / 1e9 / (ms / 1e3);
 
-// M1 index functions, as pinned in Amendment 1.
+// M1 index functions, as written in units/u02-feeding-the-beast/m1_copy_bandwidth.py.
 export const coalescedIndex = (i) => i;
 export const stridedIndex = (i, n) => { const s = n / 32; return (i % s) * 32 + Math.floor(i / s); };
 export function isPermutation(f, n) {
@@ -112,3 +121,36 @@ export function isPermutation(f, n) {
 export const warpAddresses = (f, n, warp) => Array.from({ length: 32 }, (_, lane) => f(warp * 32 + lane, n));
 export const segmentsTouched = (addrs, segmentBytes, bytesPerElement) =>
   new Set(addrs.map((a) => Math.floor((a * bytesPerElement) / segmentBytes))).size;
+
+// Recorded results: recompute each headline figure from the raw arrays in units/*/m*_results.json.
+// Median as numpy.median (mean of the two middle values for an even count).
+export const median = (xs) => { const a = [...xs].sort((x, y) => x - y), h = a.length >> 1; return a.length % 2 ? a[h] : (a[h - 1] + a[h]) / 2; };
+export function recordedM1(r) {
+  const bw = (v) => median(r.variants[v].times_ms.map((t) => gbPerSecond(r.bytes_moved_per_launch, t)));
+  const coalesced = bw('coalesced'), strided = bw('strided');
+  return { coalesced, strided, ratio: coalesced / strided, correct: r.variants.coalesced.correct && r.variants.strided.correct };
+}
+export function recordedM2(r, p) {
+  const rows = r.rows.map((x) => ({ block: x.block_size, theoretical: x.theoretical_occupancy_pct,
+    achieved: median(x.achieved_occupancy_pct_runs), ms: x.time_ms_median }));
+  const best = rows.reduce((a, b) => (b.ms < a.ms ? b : a));
+  const top = Math.max(...rows.map((x) => x.theoretical));
+  const onset = rows.find((x) => x.theoretical === top);
+  const withinPp = Math.abs(best.theoretical - best.achieved) <= p.M2.withinPercentagePoints;
+  const withinStep = Math.abs(rows.indexOf(best) - rows.indexOf(onset)) <= 1;
+  return { rows, best, onset, gapPp: best.theoretical - best.achieved, withinPp, withinStep };
+}
+export function recordedM3a(r) {
+  const xs = r.per_launch_us_by_repetition;
+  return { median: median(xs), min: Math.min(...xs), max: Math.max(...xs), n: xs.length, launches: r.launches_per_repetition };
+}
+export function recordedM3b(r, p) {
+  const bySize = r.sizes.map((n) => {
+    const x = r.results_by_size[n], naive = median(x.naive.times_ms), tiled = median(x.tiled.times_ms);
+    return { n, naive, tiled, speedup: naive / tiled, naiveGflops: gflopsPerSecond(gemmFlops(n), naive), tiledGflops: gflopsPerSecond(gemmFlops(n), tiled),
+      correct: x.naive.correct && x.tiled.correct };
+  });
+  return { bySize, speedup: bySize.find((x) => x.n === p.M3b.verdictSize).speedup };
+}
+// Results files are named m1_results.json, m3a_results.json, ...: the stem is the study id.
+export const studyIdOf = (path) => path.match(/\/(m\d[a-z]?)_results\.json$/)[1].toUpperCase().replace(/([A-Z])$/, (c) => c.toLowerCase());
