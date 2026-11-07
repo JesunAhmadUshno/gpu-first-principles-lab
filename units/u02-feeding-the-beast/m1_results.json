@@ -1,0 +1,72 @@
+{
+  "study": "M1 coalesced vs strided global-memory bandwidth",
+  "device": "NVIDIA GeForce RTX 5050 Laptop GPU",
+  "machine": "BlackBox",
+  "torch": "2.11.0+cu128",
+  "triton": "3.9.0",
+  "n_elements": 16777216,
+  "bytes_moved_per_launch": 134217728,
+  "warmup_launches": 3,
+  "timed_launches": 20,
+  "variants": {
+    "coalesced": {
+      "correct": true,
+      "times_ms": [
+        0.4476,
+        0.4924,
+        0.4595,
+        0.4567,
+        0.4625,
+        0.4689,
+        0.4546,
+        0.4442,
+        0.4393,
+        0.4896,
+        0.4299,
+        0.4328,
+        0.4272,
+        0.4299,
+        0.43,
+        0.4268,
+        0.4259,
+        0.4403,
+        0.4324,
+        0.4357
+      ],
+      "bandwidth_gb_s_median": 305.17387374116095,
+      "bandwidth_gb_s_q1": 293.44334529126365,
+      "bandwidth_gb_s_q3": 312.1458632717291
+    },
+    "strided": {
+      "correct": true,
+      "times_ms": [
+        1.8935,
+        1.8575,
+        1.8728,
+        1.8567,
+        1.9103,
+        1.8571,
+        1.8571,
+        1.8662,
+        1.8626,
+        1.8803,
+        1.8675,
+        1.8551,
+        1.852,
+        1.8531,
+        1.8535,
+        1.8515,
+        1.8475,
+        1.8525,
+        1.8422,
+        1.8415
+      ],
+      "bandwidth_gb_s_median": 72.28131544328775,
+      "bandwidth_gb_s_q1": 71.90831936919683,
+      "bandwidth_gb_s_q3": 72.45612839545264
+    }
+  },
+  "ratio_median_coalesced_over_strided": 4.222029882405803,
+  "verdict": "PARTIALLY SUPPORTED",
+  "verdict_rule": "supported at ratio >= 5, partially supported at >= 2, refuted below 2 (PREREGISTRATION.md M1, frozen)"
+}

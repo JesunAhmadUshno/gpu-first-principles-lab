@@ -18,7 +18,7 @@ Protocol:
 
 Frozen verdict rule: hypothesis supported if the median coalesced bandwidth is at least 5x the median strided bandwidth; partially supported if the ratio is at least 2x and below 5x; refuted if below 2x.
 
-RESULTS: NOT YET RUN
+RESULTS (2026-11-07, BlackBox, RTX 5050 Laptop GPU): coalesced median 305.2 GB/s, strided median 72.3 GB/s, ratio 4.22x. Verdict: PARTIALLY SUPPORTED. Full record: units/u02-feeding-the-beast/STUDY.md and m1_results.json.
 
 ## M2: Occupancy sweep against the theory curve (Unit U03)
 
