@@ -64,7 +64,7 @@ assert.deepEqual(parseContract(read('SPEC.md')).map((c) => c.part), ['STUDY.md',
 
 const unitDirs = fs.readdirSync(path.join(root, 'units')).filter((d) => fs.existsSync(path.join(root, 'units', d, 'STUDY.md'))).sort();
 const units = unitDirs.map((d) => parseUnitStudy(read(`units/${d}/STUDY.md`), `units/${d}/STUDY.md`));
-assert.deepEqual(units.map((u) => u.unit), ['U01', 'U02', 'U03', 'U06', 'U12']);
+assert.deepEqual(units.map((u) => u.unit), ['U01', 'U02', 'U03', 'U06', 'U12', 'U13']);
 assert.ok(units.every((u) => u.questions.length === 4 && u.closure.length > 0));
 
 const review = read('docs/research-review.md');

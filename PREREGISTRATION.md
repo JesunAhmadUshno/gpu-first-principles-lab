@@ -83,4 +83,4 @@ Protocol:
 
 Frozen verdict rule: supported if the ratio at 2048 is at least 0.25; partially supported if at least 0.10 and below 0.25; refuted below 0.10. The gap is published either way.
 
-RESULTS: NOT YET RUN
+RESULTS (2026-11-08, BlackBox, RTX 5050 Laptop GPU): tuned kernel median throughput 3,729.1, 6,486.1, and 8,613.6 GFLOP/s at sizes 512, 1024, and 2048; cuBLAS SGEMM on identical inputs 4,625.6, 7,484.8, and 8,698.8 GFLOP/s; ratio at the verdict size 2048 is 0.990. Verdict: SUPPORTED. Full record: units/u13-gemm-and-the-synthesis/STUDY.md and m3c_results.json.

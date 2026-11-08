@@ -1,0 +1,178 @@
+{
+  "study": "M3c tuned tiled GEMM vs cuBLAS SGEMM",
+  "device": "NVIDIA GeForce RTX 5050 Laptop GPU",
+  "machine": "BlackBox",
+  "torch": "2.11.0+cu128",
+  "triton": "3.9.0",
+  "sizes": [
+    512,
+    1024,
+    2048
+  ],
+  "warmup_launches": 2,
+  "timed_launches": 10,
+  "seed": 20261107,
+  "tuned_config": {
+    "BLOCK_M": 128,
+    "BLOCK_N": 128,
+    "BLOCK_K": 32,
+    "GROUP_M": 8,
+    "num_warps": 8,
+    "num_stages": 3,
+    "dot_input_precision": "ieee"
+  },
+  "library_call": "cuBLAS SGEMM through PyTorch matmul dispatch on the same device tensors, TF32 disabled (allow_tf32 read back as False); handle creation and workspace setup fall in the warmup launches, outside the timed region",
+  "correctness": "host reference (NumPy matmul on the same host inputs); full check at size 512 with max abs error below 1e-2 required before timing; fixed seeded sample of 4096 elements at 1024 and 2048; both implementations checked",
+  "gpu_state_before": {
+    "nvidia_smi": "22 MHz, 405 MHz, 0 %, 47, 4.39 W"
+  },
+  "gpu_state_after": {
+    "nvidia_smi": "1500 MHz, 11001 MHz, 0 %, 47, 7.61 W"
+  },
+  "results_by_size": {
+    "512": {
+      "tuned": {
+        "correct": true,
+        "elements_checked": 262144,
+        "max_abs_err_vs_host": 9.918212890625e-05,
+        "times_ms": [
+          0.1072319969534874,
+          0.09913600236177444,
+          0.08799999952316284,
+          0.08383999764919281,
+          0.0615679994225502,
+          0.08240000158548355,
+          0.0597120001912117,
+          0.06038400158286095,
+          0.06080000102519989,
+          0.059776000678539276
+        ],
+        "time_ms_median": 0.07198400050401688,
+        "time_ms_q1": 0.06048800144344568,
+        "time_ms_q3": 0.08695999905467033,
+        "gflops_median": 3729.098884758713,
+        "registers_per_thread": 216,
+        "shared_bytes_per_block": 65536
+      },
+      "cublas": {
+        "correct": true,
+        "elements_checked": 262144,
+        "max_abs_err_vs_host": 5.7220458984375e-05,
+        "times_ms": [
+          0.12860800325870514,
+          0.07628799974918365,
+          0.06400000303983688,
+          0.063680000603199,
+          0.057792000472545624,
+          0.0570559985935688,
+          0.057760000228881836,
+          0.05737600103020668,
+          0.05827200040221214,
+          0.05571199953556061
+        ],
+        "time_ms_median": 0.05803200043737888,
+        "time_ms_q1": 0.05747200082987547,
+        "time_ms_q3": 0.06392000243067741,
+        "gflops_median": 4625.645402137448
+      },
+      "ratio_tuned_over_cublas": 0.8061791513537866
+    },
+    "1024": {
+      "tuned": {
+        "correct": true,
+        "elements_checked": 4096,
+        "max_abs_err_vs_host": 0.00011444091796875,
+        "times_ms": [
+          0.33932799100875854,
+          0.33776000142097473,
+          0.3306879997253418,
+          0.3323200047016144,
+          0.33113598823547363,
+          0.3319680094718933,
+          0.3307200074195862,
+          0.3306240141391754,
+          0.3302080035209656,
+          0.33103999495506287
+        ],
+        "time_ms_median": 0.33108799159526825,
+        "time_ms_q1": 0.3306960016489029,
+        "time_ms_q3": 0.3322320058941841,
+        "gflops_median": 6486.141758427613,
+        "registers_per_thread": 216,
+        "shared_bytes_per_block": 65536
+      },
+      "cublas": {
+        "correct": true,
+        "elements_checked": 4096,
+        "max_abs_err_vs_host": 5.340576171875e-05,
+        "times_ms": [
+          0.29740801453590393,
+          0.2863999903202057,
+          0.2848320007324219,
+          0.28867200016975403,
+          0.2866879999637604,
+          0.2849920094013214,
+          0.2871359884738922,
+          0.2849920094013214,
+          0.2871679961681366,
+          0.2871679961681366
+        ],
+        "time_ms_median": 0.2869119942188263,
+        "time_ms_q1": 0.2853440046310425,
+        "time_ms_q3": 0.2871679961681366,
+        "gflops_median": 7484.81656839388
+      },
+      "ratio_tuned_over_cublas": 0.8665732418636192
+    },
+    "2048": {
+      "tuned": {
+        "correct": true,
+        "elements_checked": 4096,
+        "max_abs_err_vs_host": 0.00022125244140625,
+        "times_ms": [
+          2.028575897216797,
+          1.997663974761963,
+          1.977952003479004,
+          2.0009279251098633,
+          1.9967999458312988,
+          1.9808640480041504,
+          1.9916800260543823,
+          1.992192029953003,
+          1.9975359439849854,
+          1.9840320348739624
+        ],
+        "time_ms_median": 1.9944959878921509,
+        "time_ms_q1": 1.9859440326690674,
+        "time_ms_q3": 1.9976319670677185,
+        "gflops_median": 8613.639379719312,
+        "registers_per_thread": 216,
+        "shared_bytes_per_block": 65536
+      },
+      "cublas": {
+        "correct": true,
+        "elements_checked": 4096,
+        "max_abs_err_vs_host": 0.0002899169921875,
+        "times_ms": [
+          1.9681600332260132,
+          1.981760025024414,
+          1.9644479751586914,
+          1.9659199714660645,
+          1.9625279903411865,
+          1.9669760465621948,
+          2.0315840244293213,
+          2.031264066696167,
+          2.034463882446289,
+          2.035007953643799
+        ],
+        "time_ms_median": 1.9749600291252136,
+        "time_ms_q1": 1.966183990240097,
+        "time_ms_q3": 2.0315040349960327,
+        "gflops_median": 8698.84399210329
+      },
+      "ratio_tuned_over_cublas": 0.9902050648958269
+    }
+  },
+  "ratio_at_2048": 0.9902050648958269,
+  "verdict": "SUPPORTED",
+  "verdict_rule": "supported if the ratio of tuned-kernel GFLOP/s to cuBLAS GFLOP/s at 2048 is at least 0.25; partially supported if at least 0.10 and below 0.25; refuted below 0.10 (PREREGISTRATION.md M3c, frozen)"
+}

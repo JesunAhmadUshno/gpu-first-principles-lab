@@ -2,7 +2,7 @@
 
 A study lab for GPU architecture, learned from first principles and proven by measurement.
 
-Status: four of five micro-studies measured on 2026-11-07, each under its frozen rule: M1 (U02, coalesced vs strided bandwidth) PARTIALLY SUPPORTED at a 4.22x ratio; M2 (U03, occupancy sweep) PARTIALLY SUPPORTED; M3a (U06, launch overhead) REFUTED at 12.28 microseconds; M3b (U12, naive vs tiled GEMM) SUPPORTED at 8.62x. M3c remains unrun, and no unit has its concept answers written yet. Every measured claim arrives through a pre-registered unit.
+Status: all five micro-studies measured, each under its frozen rule: M1 (U02, coalesced vs strided bandwidth) PARTIALLY SUPPORTED at a 4.22x ratio; M2 (U03, occupancy sweep) PARTIALLY SUPPORTED; M3a (U06, launch overhead) REFUTED at 12.28 microseconds; M3b (U12, naive vs tiled GEMM) SUPPORTED at 8.62x; M3c (U13, tuned GEMM vs cuBLAS) SUPPORTED at a 0.99 ratio at size 2048. M1 to M3b ran 2026-11-07; M3c ran 2026-11-08. No unit has its concept answers written yet. Every measured claim arrives through a pre-registered unit.
 
 **Live dashboard:** [jesunahmadushno.github.io/gpu-first-principles-lab](https://jesunahmadushno.github.io/gpu-first-principles-lab/), with the study map, the frozen verdict rules, the recorded results and three what-if tools that run in your browser. Source in `site/`; every count and threshold is parsed from this repo's markdown at build time, and every measured figure is recomputed from the raw arrays in `units/*/m*_results.json` and checked against PREREGISTRATION.md when the site builds.
 
