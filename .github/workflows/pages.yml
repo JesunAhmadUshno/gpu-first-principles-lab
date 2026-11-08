@@ -1,11 +1,11 @@
 name: Pages
 
-# Builds the live dashboard in site/ from the committed markdown (study map, preregistration, units, review)
+# Builds the live dashboard in site/ from the committed markdown (study map, preregistration, units, REPORT.md, README verdict)
 # and publishes it to GitHub Pages. The build fails if the known-answer check in site/src/lab.check.mjs fails.
 on:
   push:
     branches: [main]
-    paths: ['site/**', 'units/**', 'docs/**', 'STUDY-MAP.md', 'PREREGISTRATION.md', 'README.md', 'SPEC.md', '.github/workflows/pages.yml']
+    paths: ['site/**', 'units/**', 'analysis/**', 'STUDY-MAP.md', 'PREREGISTRATION.md', 'README.md', 'REPORT.md', 'SPEC.md', '.github/workflows/pages.yml']
   workflow_dispatch:
 
 permissions:

@@ -278,7 +278,6 @@ svg.chart.grid { max-width: 420px; border: 1px solid var(--border); border-radiu
 .qs li { display: grid; grid-template-columns: 18px minmax(0, 1fr); }
 .closure { font-size: 12px; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-td.grade { font-family: var(--serif); font-size: 22px; }
 footer p { max-width: 80ch; margin: 0 auto 10px; padding: 0 16px; }
 footer a { color: #e9e4da; }
 @media (max-width: 900px) { .ugrid { grid-template-columns: 1fr; } }
