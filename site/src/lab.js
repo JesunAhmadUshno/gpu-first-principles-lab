@@ -68,6 +68,7 @@ export function parseReadme(md) {
   const pick = (k) => (md.match(new RegExp(`^- ${k}: (.+)$`, 'm')) || [])[1] || '';
   return {
     host: pick('Host'), gpu: pick('GPU'),
+    verdict: ((md.match(/^\*\*Verdict\.\*\* (.+?\.)(?: |$)/m) || [])[1]) || '',
     steps: lines(md).filter((l) => /^\d\. /.test(l)).map((l) => l.slice(3)),
     primarySources: lines((md.split('Primary sources used for verification:')[1] || '').split('\n## ')[0]).filter((l) => l.startsWith('- ')).map((l) => l.slice(2)),
   };

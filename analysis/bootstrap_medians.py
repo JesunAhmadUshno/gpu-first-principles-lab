@@ -38,12 +38,15 @@ def compute():
     gb = lambda times: [m1["bytes_moved_per_launch"] / 1e9 / (t / 1e3) for t in times]
     m3a = load("units/u06-hardware-hierarchy/m3a_results.json")
     m3b = load("units/u12-shared-memory-and-tiling/m3b_results.json")["results_by_size"]["1024"]
+    m3c = load("units/u13-gemm-and-the-synthesis/m3c_results.json")["results_by_size"]["2048"]
     return {
         "method": f"percentile bootstrap, {RESAMPLES} resamples, seed {SEED}, Python random.choices",
         "M1_ratio_of_median_bandwidths": interval(
             ratio_of_medians, gb(m1["variants"]["coalesced"]["times_ms"]), gb(m1["variants"]["strided"]["times_ms"])),
         "M3a_median_per_launch_us": interval(statistics.median, m3a["per_launch_us_by_repetition"]),
         "M3b_speedup_at_1024": interval(ratio_of_medians, m3b["naive"]["times_ms"], m3b["tiled"]["times_ms"]),
+        # throughput ratio tuned/cuBLAS = time ratio cuBLAS/tuned (same FLOP count)
+        "M3c_ratio_tuned_over_cublas_at_2048": interval(ratio_of_medians, m3c["cublas"]["times_ms"], m3c["tuned"]["times_ms"]),
     }
 
 

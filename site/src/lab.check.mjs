@@ -1,6 +1,6 @@
 // Known-answer self-check, run by "npm run build" before vite. Every value the page computes
 // in the browser is reproduced here from the repo's own files (PREREGISTRATION.md, STUDY-MAP.md,
-// README.md, SPEC.md, units/ including the recorded m*_results.json, docs/research-review.md)
+// README.md, SPEC.md, units/ including the recorded m*_results.json, REPORT.md)
 // and the protocol arithmetic.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -58,6 +58,7 @@ for (const s of prereg.studies) {
 
 const readme = parseReadme(read('README.md'));
 assert.equal(readme.host, 'BlackBox');
+assert.match(readme.verdict, /^(Draft|Proposed|Functional|Evaluated|v1\.0 Released)\b/, 'README verdict line');
 assert.equal(readme.steps.length, 5);
 assert.equal(readme.primarySources.length, 3);
 assert.deepEqual(parseContract(read('SPEC.md')).map((c) => c.part), ['STUDY.md', 'Code', 'Preregistration', 'Results', 'Verdict']);
@@ -67,9 +68,9 @@ const units = unitDirs.map((d) => parseUnitStudy(read(`units/${d}/STUDY.md`), `u
 assert.deepEqual(units.map((u) => u.unit), ['U01', 'U02', 'U03', 'U06', 'U12', 'U13']);
 assert.ok(units.every((u) => u.questions.length === 4 && u.closure.length > 0));
 
-const review = read('docs/research-review.md');
-assert.equal(parseTable(review, 'Scorecard').length, 10);
-assert.ok(parseTable(review, 'Scorecard').every((r) => r.length === 4));
+const review = read('REPORT.md');
+assert.equal(parseTable(review, 'Assessment by criterion').length, 10);
+assert.ok(parseTable(review, 'Assessment by criterion').every((r) => r.length === 3));
 assert.ok(parseTable(review, 'What remains open, and exactly what closes it').every((r) => r.length === 3));
 
 // 3. Verdict bands at their edges.

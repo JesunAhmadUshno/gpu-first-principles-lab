@@ -3,7 +3,7 @@ import studyMapMd from '../../STUDY-MAP.md?raw';
 import preregMd from '../../PREREGISTRATION.md?raw';
 import readmeMd from '../../README.md?raw';
 import specMd from '../../SPEC.md?raw';
-import reviewMd from '../../docs/research-review.md?raw';
+import reviewMd from '../../REPORT.md?raw';
 import P from './prereg.json';
 import BOOT from '../../analysis/bootstrap_medians.json';
 import {
@@ -33,7 +33,7 @@ const R3B = REC.M3b && recordedM3b(REC.M3b, P);
 const ci = (k, d) => BOOT[k] ? ` Bootstrap 95% interval ${BOOT[k].lo.toFixed(d)} to ${BOOT[k].hi.toFixed(d)} (analysis/bootstrap_medians.json).` : '';
 const README = parseReadme(readmeMd);
 const CONTRACT = parseContract(specMd);
-const SCORECARD = parseTable(reviewMd, 'Scorecard');
+const SCORECARD = parseTable(reviewMd, 'Assessment by criterion');
 const OPEN_GAPS = parseTable(reviewMd, 'What remains open, and exactly what closes it');
 const N_UNITS = MAP.filter((r) => r.unit.startsWith('U')).length;
 const N_RUN = RAN.size;
@@ -71,7 +71,7 @@ function MenuBar() {
       <a className="m" href={blob('SPEC.md')}>Spec</a>
       <a className="m" href={blob('STUDY-MAP.md')}>Study map</a>
       <a className="m" href={blob('PREREGISTRATION.md')}>Pre-registration</a>
-      <a className="m" href={blob('docs/research-review.md')}>Review</a>
+      <a className="m" href={blob('REPORT.md')}>Report</a>
       <span className="spacer" />
       <span className={`status ${N_RUN ? 'ok' : 'warn'}`}><i /> {N_RUN === 0 ? 'No results yet' : `${N_RUN} of ${PREREG.studies.length} run`}</span>
       <a href={REPO}>GitHub ↗</a>
@@ -166,6 +166,7 @@ function Hero() {
       <div className="strip">
         <span className="pill info">Hardware of record: {README.host} · {README.gpu}</span>
         <span className="pill info">Device in every protocol: {PREREG.device}</span>
+        <span className="pill info">Verdict (portfolio standard v2): {README.verdict}</span>
       </div>
       <div className="tiles">
         <div className="tile"><div className="num">{N_UNITS}</div><div className="cap">units in the study map, U01 to U{String(N_UNITS).padStart(2, '0')}</div></div>
@@ -623,14 +624,14 @@ function UnitQuestions() {
 function Rigour() {
   const tone = (s) => (s === 'Strong' ? 'good' : s.startsWith('Fixed') ? 'info' : s.startsWith('Partly') ? 'warn' : 'bad');
   return (
-    <section id="rigour" className="card window reveal" data-title="rubric.md · research review">
+    <section id="rigour" className="card window reveal" data-title="REPORT.md · research review">
       <p className="eyebrow">Research rigour and limitations</p>
-      <h2>An honest scorecard of the design <em>and the first runs</em>.</h2>
-      <p className="sub">Read from <a href={blob('docs/research-review.md')}>docs/research-review.md</a>, which grades the protocols and the {word(N_RUN)} recorded runs, including where the runs are weak.</p>
+      <h2>An honest assessment of the design <em>and the first runs</em>.</h2>
+      <p className="sub">Read from <a href={blob('REPORT.md')}>REPORT.md</a>, which assesses the protocols and the {word(N_RUN)} recorded runs, including where the runs are weak.</p>
       <div style={{ overflowX: 'auto', marginTop: 12 }}>
         <table className="stack">
-          <thead><tr><th>Criterion</th><th>Grade</th><th>Status</th><th>Note</th></tr></thead>
-          <tbody>{SCORECARD.map(([c, g, s, note]) => <tr key={c}><td><b>{c}</b></td><td className="grade">{g}</td><td><span className={`pill ${tone(s)}`}>{s}</span></td><td className="hint wide">{note}</td></tr>)}</tbody>
+          <thead><tr><th>Criterion</th><th>Status</th><th>Note</th></tr></thead>
+          <tbody>{SCORECARD.map(([c, s, note]) => <tr key={c}><td><b>{c}</b></td><td><span className={`pill ${tone(s)}`}>{s}</span></td><td className="hint wide">{note}</td></tr>)}</tbody>
         </table>
       </div>
       <h3 style={{ marginTop: 24 }}>Still open, and what closes each gap</h3>

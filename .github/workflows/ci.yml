@@ -1,5 +1,13 @@
-name: ci
-on: [push, pull_request]
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -11,5 +19,23 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - name: scaffold tests
+      - name: Run tests
         run: python -m unittest discover -s tests -v
+      - name: Compile the study harnesses (they need a GPU to run)
+        run: python -m py_compile units/*/*.py analysis/*.py
+      - name: Results regenerate unchanged from the evidence
+        run: python analysis/bootstrap_medians.py > /dev/null && git diff --exit-code analysis/bootstrap_medians.json
+  site:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+      - run: npm ci
+        working-directory: site
+      - name: Build the dashboard (recomputes every figure from the raw arrays)
+        run: npm run build
+        working-directory: site
