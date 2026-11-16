@@ -29,10 +29,10 @@ descriptive and the frozen rules read the medians.
 
 ## Results: every hypothesis scored
 
-All runs on 2026-11-07, one session per study, BlackBox. Intervals are
-bootstrap 95 percent intervals over within-session launches
-(analysis/bootstrap_medians.json); M2 has none because its record
-stores only medians and quartiles.
+Runs on 2026-11-07 (M1, M2, M3a, M3b) and 2026-11-08 (M3c), one session
+per study, BlackBox. Intervals are bootstrap 95 percent intervals over
+within-session launches (analysis/bootstrap_medians.json); M2 has none
+because its record stores only medians and quartiles.
 
 | Study | Hypothesis (frozen line) | Measured | Interval | Verdict |
 | --- | --- | --- | --- | --- |
