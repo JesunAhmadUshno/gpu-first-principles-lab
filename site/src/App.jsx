@@ -121,7 +121,7 @@ function NumberField({ label, value, onChange, min, step, unit }) {
 export default function App() {
   useReveal();
   return (
-    <div className="wrap">
+    <div className="wrap"><a className="skip" href="#top">Skip to content</a>
       <MenuBar />
       <div className="glow" aria-hidden="true" />
       <Hero />
@@ -140,7 +140,7 @@ export default function App() {
         <p>Study map source: <a href="https://github.com/BEFORE-GPU-ENGINEERING/BEFORE-GPU-ENGINEERING">BEFORE-GPU-ENGINEERING</a> (MIT licence), cited for chapter titles and ranges only; no content is reproduced.
           Primary sources for verification: {README.primarySources.join('; ')}.</p>
         <p>Code and text: Apache-2.0. Every count and threshold on this page is parsed from the repo's markdown at build time. Measured figures are recorded runs ({RUN_DATES.join(', ') || 'none yet'}, BlackBox), recomputed from the raw arrays in units/*/m*_results.json; this page never reruns them. The playground, calculator and visualizer run in your browser on inputs you choose.</p>
-      </footer>
+      <nav className="support" aria-label="Support this work"><a href="https://github.com/sponsors/JesunAhmadUshno">Sponsor this work</a><a href="https://github.com/sponsors/JesunAhmadUshno">Donate</a><a href="https://buymeacoffee.com/jesun">Buy Me a Coffee</a><a href="https://calendly.com/jesunahmadushno/30min">Work with me</a></nav></footer>
     </div>
   );
 }
