@@ -95,3 +95,30 @@ occupancy figures in m2_results.json remain uncalibrated, and
 the M2 profiler item stays open with the blocker narrowed from
 "not installed" to "installed; counter access needs an
 elevated session".
+
+Outcome addendum 2 (2026-11-18, after the counter-access
+setting was enabled): Jesun enabled "allow access to GPU
+performance counters to all users" in NVIDIA Control Panel at
+about 02:48 EST. Two smoke profiles (block 128, Nsight Compute
+2025.2.1.3, otherwise exactly the method in this entry) ran at
+02:51 and 02:52 EST, the second from a detached scheduled task
+so the intermittent SSH route could not kill it. Both failed
+identically to the attempts above: the profiler connects, then
+"Failed to initialize the profiler: LibraryNotLoaded. Check
+that a compatible driver library is loaded", and the profiled
+process exits 0xC0000005.
+
+Machine state at the time: last boot 2026-11-14 18:20 EST, so
+the driver has not reloaded since the setting was changed.
+The Control Panel counter setting is read by the driver when
+it loads, so the still-running driver enforces the old
+restriction. The one remaining step is a reboot of BlackBox,
+which is Jesun's action at the machine and was not done by the
+agent. After a reboot, the six invocations in this entry can
+be re-run as written; nothing else needs to change.
+
+No calibration numbers exist and none were estimated:
+units/u03-inside-the-silicon/m2_ncu_calibration_2026-11-18.json
+was not created. The M2 profiler item stays open, with the
+blocker narrowed to: counter setting enabled, awaiting a
+driver reload (reboot).
