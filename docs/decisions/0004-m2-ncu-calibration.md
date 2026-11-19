@@ -122,3 +122,40 @@ units/u03-inside-the-silicon/m2_ncu_calibration_2026-11-18.json
 was not created. The M2 profiler item stays open, with the
 blocker narrowed to: counter setting enabled, awaiting a
 driver reload (reboot).
+Outcome addendum 3 (2026-11-19, after the reboot): BlackBox
+was rebooted on Jesun's action; last boot 2026-11-19 04:01
+EST, so the driver has reloaded since the counter setting
+was enabled. The setting was verified in the registry before
+the run: RmProfilingAdminOnly is 0 under HKLM\SYSTEM\
+CurrentControlSet\Services\nvlddmkm\Global\NVTweak (driver
+577.05, GeForce RTX 5050 Laptop GPU), so GPU performance
+counters are open to all users. The calibration was then
+re-run exactly as written in this entry, three attempts:
+(1) Nsight Compute 2025.2.1.3 in the SSH session, block 128
+smoke, the primary metric; (2) the same invocation from the
+interactive desktop session (a one-off scheduled task running
+as the signed-in user, deleted afterwards); (3) this entry's
+fallback, --section Occupancy in place of the metric, block
+128, in the SSH session. All three failed identically at
+profiler initialization: the profiler connects, then "Failed
+to initialize the profiler: LibraryNotLoaded. Check that a
+compatible driver library is loaded", and the profiled
+process exited 0xC0000005 where its exit was observed. The
+counter-access and not-yet-reloaded causes named in addendum
+2 are both cleared and the failure persists unchanged, so
+the blocker is narrowed again: with counters open to all
+users and the driver reloaded, the 2025.2.1.3 counter
+measurement library does not load against driver 577.05 on
+this machine. The one remaining step is Jesun's, at the
+machine: a driver update to the generation paired with a
+current Nsight Compute (2025.3.0, already placed in the user
+folder by this entry, reported "Cuda driver is not
+compatible with Nsight Compute" against 577.05). After that
+update the six invocations in this entry re-run unchanged.
+
+No calibration numbers exist and none were estimated:
+units/u03-inside-the-silicon/m2_ncu_calibration_2026-11-18.json
+was not created. The twin-kernel achieved occupancy figures
+in m2_results.json remain uncalibrated, and the M2 profiler
+item stays open with the blocker narrowed to the driver
+pairing.
